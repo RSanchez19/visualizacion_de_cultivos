@@ -1,0 +1,14 @@
+[general]
+name=Visualizacion Inteligente de Zonas de Cultivo
+qgisMinimumVersion=3.22
+description=Plugin para visualizar y analizar zonas de cultivo en El Salvador
+version=0.1
+author=ACA Project
+email=your.email@example.com
+about=Plugin para visualización y análisis de zonas de cultivo en el occidente de El Salvador
+tracker=http://bugs.osgeo.org
+repository=http://www.osgeo.org
+homepage=http://plugins.qgis.org
+category=Agriculture
+icon=icon.png
+tags=agriculture, crops, visualization, analysis 
