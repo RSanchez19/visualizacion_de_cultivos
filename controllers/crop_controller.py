@@ -1,4 +1,4 @@
-from qgis.core import QgsVectorLayer
+from qgis.core import QgsVectorLayer, QgsProject
 from ..models.crop_model import CropModel
 from ..views.crop_view import CropView
 
@@ -11,6 +11,7 @@ class CropController:
         # Connect signals
         self.view.btnConsultar.clicked.connect(self.handle_query)
         self.view.btnLimpiar.clicked.connect(self.handle_clear)
+        self.view.cmbDepartamento.currentIndexChanged.connect(self.handle_department_change)
         
         # Initialize view
         self.view.set_available_crops(self.model.get_available_crops())
@@ -79,3 +80,32 @@ class CropController:
             
         # Update status
         self.view.status_label.setText("Filtros limpiados") 
+
+    def handle_department_change(self):
+        department = self.view.get_department()
+        if department == "Todos los departamentos":
+            return  # No hacer nada si es la opción general
+
+        # Buscar el grupo "Capas_departamentos"
+        root = QgsProject.instance().layerTreeRoot()
+        group = root.findGroup("Capas_departamentos")
+        if not group:
+            self.view.status_label.setText("No se encontró el grupo 'Capas_departamentos'")
+            return
+
+        # Buscar la capa con el nombre del departamento
+        found = False
+        for child in group.children():
+            if child.name() == department:
+                child.setItemVisibilityChecked(True)  # Encender visibilidad
+                layer = child.layer()
+                if layer:
+                    self.iface.setActiveLayer(layer)  # Seleccionar como activa
+                found = True
+            else:
+                child.setItemVisibilityChecked(False)  # Apagar otras capas
+
+        if not found:
+            self.view.status_label.setText(f"No se encontró la capa '{department}' en el grupo")
+        else:
+            self.view.status_label.setText(f"Capa '{department}' activada") 
