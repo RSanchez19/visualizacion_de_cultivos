@@ -35,5 +35,5 @@ jobs:
       run: |
         python test_plugin.py
       env:
-        PYTHONPATH: $PYTHONPATH:/usr/lib/python3/dist-packages
+        PYTHONPATH: /usr/lib/python3/dist-packages:/usr/share/qgis/python
         QT_QPA_PLATFORM: offscreen 
