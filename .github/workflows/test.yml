@@ -30,6 +30,7 @@ jobs:
     
     - name: Run tests
       run: |
+        ls -l /usr/lib/python3/dist-packages/qgis
         python test_plugin.py
       env:
         PYTHONPATH: $PYTHONPATH:/usr/lib/python3/dist-packages
