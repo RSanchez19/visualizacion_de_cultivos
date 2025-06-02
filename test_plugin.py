@@ -32,6 +32,7 @@ class MockView:
         self.cmbProduccion = self # Mock combobox
         self.radio_departamentos = [] # Mock radio buttons
         self.status_label = self # Mock label
+        self.lblFeatureCount = self # Mock label
         self._selected_zone = ""
         self._selected_crop = ""
         self._min_production = ""
