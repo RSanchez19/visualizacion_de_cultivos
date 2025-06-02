@@ -81,7 +81,7 @@ class TestCultivoPlugin(unittest.TestCase):
         #      cls.app = QApplication([]) # Use empty list for sys.argv in headless
 
         # Create a test vector layer
-        cls.layer = QgsVectorLayer("Point?crs=EPSG:4326&field=cultivo:string&field=produccion:integer", "Zonas de Cultivos", "memory")
+        cls.layer = QgsVectorLayer("Point?crs=EPSG:4326&field=cultivo:string&field=produccion:integer&field=NOM_DPTO:string", "Zonas de Cultivos", "memory")
 
         # Add test features
         pr = cls.layer.dataProvider()
@@ -90,12 +90,12 @@ class TestCultivoPlugin(unittest.TestCase):
         # Add features with different crop types and production values
         # Ensure field names match the controller's expectations
         test_data = [
-            (["Maíz", 5]),
-            (["Maíz", 15]),
-            (["Frijol", 8]),
-            (["Caña de azúcar", 20]),
-            (["Maíz", 10]), # Additional data for testing queries
-            (["Frijol", 10]),
+            (["Maíz", 5, "SAN SALVADOR"]),
+            (["Maíz", 15, "SAN SALVADOR"]),
+            (["Frijol", 8, "LA LIBERTAD"]),
+            (["Caña de azúcar", 20, "LA PAZ"]),
+            (["Maíz", 10, "SAN SALVADOR"]), # Additional data for testing queries
+            (["Frijol", 10, "LA LIBERTAD"]),
         ]
 
         for attrs in test_data:
