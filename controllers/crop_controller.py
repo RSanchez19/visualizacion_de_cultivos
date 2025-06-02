@@ -1,6 +1,6 @@
 from qgis.core import QgsVectorLayer, QgsProject
-from ..models.crop_model import CropModel
-from ..views.crop_view import CropView
+from models.crop_model import CropModel
+from views.crop_view import CropView
 import unicodedata
 
 class CropController:

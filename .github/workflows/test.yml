@@ -34,9 +34,8 @@ jobs:
 
     - name: Run tests with coverage
       run: |
-        export PYTHONPATH=$PYTHONPATH:$(pwd)
+        export PYTHONPATH=$PYTHONPATH:$(pwd):/usr/lib/python3/dist-packages:/usr/share/qgis/python
         python -m pytest test_plugin.py -v --cov=. --cov-report=term-missing
       env:
-        PYTHONPATH: /usr/lib/python3/dist-packages:/usr/share/qgis/python
         QT_QPA_PLATFORM: offscreen
         QGIS_PREFIX_PATH: /usr 
