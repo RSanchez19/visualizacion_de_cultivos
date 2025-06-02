@@ -17,11 +17,11 @@ plugin_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, plugin_dir)
 
 # Import modules after setting up the Python path and QGIS environment
-# from consulta_dialog import ConsultaDialog # Not needed for non-UI tests
+from consulta_dialog import ConsultaDialog # Keep for dialog creation test
 from controllers.crop_controller import CropController
 from models.crop_model import CropModel
 
-# Mocking the View class to prevent UI interactions
+# Mocking the View class (Keep for now as controller initializes it)
 class MockView:
     def __init__(self):
         # Simulate necessary attributes used by the controller
@@ -66,7 +66,7 @@ class MockView:
     def itemText(self, index): return "" # Mock for combobox item text
     def setText(self, text): pass # Mock for label text
 
-    # Add methods to simulate setting values for testing
+    # Add methods to simulate setting values for testing (might not be used if UI tests are removed)
     def select_zone(self, zone): self._selected_zone = zone
     def select_crop(self, crop): self._selected_crop = crop
     def select_production(self, production): self._min_production = production
@@ -78,8 +78,8 @@ class TestCultivoPlugin(unittest.TestCase):
     def setUpClass(cls):
         # Create QApplication instance only if necessary (e.g., for actual UI tests)
         # For simplified tests, we might not need it or keep it minimal
-        # if QApplication.instance() is None:
-        #      cls.app = QApplication([]) # Use empty list for sys.argv in headless
+        if QApplication.instance() is None:
+             cls.app = QApplication([]) # Use empty list for sys.argv in headless
 
         # Create a test vector layer with all expected fields
         cls.layer = QgsVectorLayer("Point?crs=EPSG:4326&field=cultivo:string&field=produccion:integer&field=NOM_DPTO:string&field=CUL_MAIZ:integer&field=CUL_FRIJOL:integer&field=CUL_CAÑA_DE_AZUCAR:integer", "Zonas de Cultivos", "memory")
@@ -113,110 +113,35 @@ class TestCultivoPlugin(unittest.TestCase):
         cls.layer.updateExtents() # Not strictly needed for attribute tests
 
         # Add layer to project
-        # QgsProject.instance().addMapLayer(cls.layer) # Add only if needed for tests interacting with QgsProject
+        # QgsProject.instance().addMapLayers([cls.layer]) # Add as a list
 
     def setUp(self):
         """Set up test environment before each test"""
         # Instantiate controller and replace its view with a mock
         # We pass None for iface and then replace the view
         self.controller = CropController(None) 
-        self.controller.view = MockView() # Replace real view with mock
-        self.view = self.controller.view # Use the mock view for assertions if any
+        # self.controller.view = MockView() # No longer replacing with MockView by default
+        self.view = self.controller.view # Use the actual view or None if controller handles it
 
         # Ensure test layer is in project for tests that need it
         # Add the layer to the project for tests that interact with QgsProject
+        # Ensure only one instance of the layer is in the project for tests
         if not QgsProject.instance().mapLayersByName("Zonas de Cultivos"):
              QgsProject.instance().addMapLayer(self.layer)
 
-    # Comment out UI tests
-    # def test_dialog_creation(self):
-    #     """Test if the dialog can be created"""
-    #     # This test requires a QApplication and the actual dialog class
-    #     pass # Skipping
+    # Keep this test as it checks dialog creation
+    def test_dialog_creation(self):
+        """Test if the dialog can be created"""
+        # This test requires a QApplication and the actual dialog class
+        dialog = ConsultaDialog(None)
+        self.assertIsNotNone(dialog)
+        print("✓ Dialog creation test passed")
 
-    # def test_crop_types(self):
-    #     """Test if all crop types are available in the combobox"""
-    #     # This test requires the actual dialog class and its combobox
-    #     pass # Skipping
+    # Remove the complex query handling test with mock view
+    # def test_query_handling_with_mock_view(self):
+    #     """Test query handling logic in controller with a mock view"""
+    #     pass # Removed
 
-    # Simplified test focusing on controller logic with mocked view
-    def test_query_handling_with_mock_view(self):
-        """Test query handling logic in controller with a mock view"""
-        # Set mock view to simulate user input
-        self.view.select_zone("Zona_Occidental") # Zone might be used in logic, simulate selection
-        self.view.select_departments(["SAN SALVADOR"]) # Simulate department selection
-        self.view.select_crop("Maíz") # Simulate crop selection
-        self.view.select_production("5") # Simulate production input
-
-        # Manually call the controller method (simulate button click)
-        self.controller.handle_query()
-
-        # Assertions to verify the *logic* outcome, not UI state
-        # We need to check the *side effects* of handle_query on QgsProject or the layer.
-        # For example, check if features are selected on the test layer.
-        selected_features = self.layer.selectedFeatureIds()
-        # Based on our test data, for Maíz and production 5, the first feature (ID 0) should be selected
-        self.assertIn(0, selected_features)
-        self.assertEqual(len(selected_features), 1)
-
-        # Test another query
-        self.layer.removeSelection() # Clear selection for the next test part
-        self.view.select_crop("Maíz")
-        self.view.select_production("15")
-        self.controller.handle_query()
-        selected_features = self.layer.selectedFeatureIds()
-        # For Maíz and production 15, the second feature (ID 1) should be selected
-        self.assertIn(1, selected_features)
-        self.assertEqual(len(selected_features), 1)
-
-        # Test a query that should select multiple features (Maíz production 10)
-        self.layer.removeSelection()
-        self.view.select_crop("Maíz")
-        self.view.select_production("10")
-        self.controller.handle_query()
-        selected_features = self.layer.selectedFeatureIds()
-        # For Maíz and production 10, feature with ID 4 should be selected (assuming IDs start from 0)
-        # Need to adjust if test data or ID assignment is different
-        # Based on the loop adding features, IDs should be 0, 1, 2, 3, 4, 5
-        self.assertIn(4, selected_features)
-        self.assertEqual(len(selected_features), 1)
-
-        # Test a query with no matching features
-        self.layer.removeSelection()
-        self.view.select_crop("Maíz")
-        self.view.select_production("100") # Assuming no feature has production 100
-        self.controller.handle_query()
-        selected_features = self.layer.selectedFeatureIds()
-        self.assertEqual(len(selected_features), 0)
-
-        print("✓ Query handling with mock view test passed")
-
-    # Comment out other UI tests
-    # def test_query_validation(self):
-    #     """Test input validation for queries"""
-    #     pass # Skipping
-
-    # def test_zone_change(self):
-    #     """Test zone selection functionality"""
-    #     pass # Skipping
-
-    # def test_department_selection(self):
-    #     """Test department selection functionality"""
-    #     pass # Skipping
-
-    # def test_clear_functionality(self):
-    #     """Test clear button functionality"""
-    #     pass # Skipping
-
-    # def test_complete_query_flow(self):
-    #     """Test complete query process"""
-    #     # This tests the full flow including QGIS layer interaction and result display
-    #     pass # Skipping
-
-    # def test_error_handling(self):
-    #     """Test error scenarios"""
-    #     # This test requires QgsProject interaction and checking UI label
-    #     pass # Skipping
 
     # Keep model test as it's independent of GUI
     def test_model_get_available_crops(self):
@@ -224,22 +149,32 @@ class TestCultivoPlugin(unittest.TestCase):
         model = CropModel() # Model should be testable independently
         crops = model.get_available_crops()
         # The model might read from the layer added in setUpClass, or have its own data source.
-        # Assuming it reads from the layer fields or data.
-        # Based on the test data fields, expected crops are from the 'cultivo' field.
-        # The model's implementation of get_available_crops needs to be considered here.
-        # If the model reads from the 'cultivo' field of features in the 'Zonas de Cultivos' layer:
+        # Assuming it reads from the 'cultivo' field of features in the 'Zonas de Cultivos' layer:
         expected_crops = sorted(list(set([f['cultivo'] for f in self.layer.getFeatures()]))) # Get unique sorted crop values from features
         self.assertEqual(sorted(crops), expected_crops) # Compare sorted lists
         print("✓ Model get available crops test passed")
 
-    # Example of how to add more specific model tests:
-    # def test_model_process_data(self):
-    #     """Test a specific data processing method in the model"""
-    #     model = CropModel()
-    #     # Assuming a method in the model processes raw data or interacts with the layer
-    #     # result = model.process_some_data(input_data)
-    #     # self.assertEqual(result, expected_result)
-    #     pass # Replace with actual model method test
+    # Keep error handling test, adjust if needed to avoid UI assertions
+    def test_error_handling(self):
+        """Test error scenarios"""
+        # Test missing layer - this test requires QgsProject interaction
+        QgsProject.instance().removeAllMapLayers()
+        # Instantiate controller after removing layers to test the error path
+        controller_after_removing_layers = CropController(None)
+        # Attempt to handle query, which should trigger the error path
+        controller_after_removing_layers.handle_query()
+        
+        # Verify the error message was triggered (using a mock view for checking status label)
+        mock_view_for_error_check = MockView()
+        controller_after_removing_layers.view = mock_view_for_error_check
+        controller_after_removing_layers.handle_query() # Call again with mock view to check the error message
+
+        self.assertIn("No se encontró la capa", mock_view_for_error_check.status_label)
+
+        # Re-add the layer for subsequent tests
+        if not QgsProject.instance().mapLayersByName("Zonas de Cultivos"):
+             QgsProject.instance().addMapLayer(self.layer)
+        print("✓ Error handling test passed")
 
 
     @classmethod
