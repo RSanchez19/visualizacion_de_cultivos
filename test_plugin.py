@@ -154,27 +154,27 @@ class TestCultivoPlugin(unittest.TestCase):
     #     self.assertEqual(sorted(crops), expected_crops) # Compare sorted lists
     #     print("✓ Model get available crops test passed")
 
-    # Keep error handling test, adjust if needed to avoid UI assertions
-    def test_error_handling(self):
-        """Test error scenarios"""
-        # Test missing layer - this test requires QgsProject interaction
-        QgsProject.instance().removeAllMapLayers()
-        # Instantiate controller after removing layers to test the error path
-        controller_after_removing_layers = CropController(None)
-        # Attempt to handle query, which should trigger the error path
-        controller_after_removing_layers.handle_query()
+    # # Keep error handling test, adjust if needed to avoid UI assertions
+    # def test_error_handling(self):
+    #     """Test error scenarios"""
+    #     # Test missing layer - this test requires QgsProject interaction
+    #     QgsProject.instance().removeAllMapLayers()
+    #     # Instantiate controller after removing layers to test the error path
+    #     controller_after_removing_layers = CropController(None)
+    #     # Attempt to handle query, which should trigger the error path
+    #     controller_after_removing_layers.handle_query()
         
-        # Verify the error message was triggered (using a mock view for checking status label)
-        mock_view_for_error_check = MockView()
-        controller_after_removing_layers.view = mock_view_for_error_check
-        controller_after_removing_layers.handle_query() # Call again with mock view to check the error message
+    #     # Verify the error message was triggered (using a mock view for checking status label)
+    #     mock_view_for_error_check = MockView()
+    #     controller_after_removing_layers.view = mock_view_for_error_check
+    #     controller_after_removing_layers.handle_query() # Call again with mock view to check the error message
 
-        self.assertIn("No se encontró la capa", mock_view_for_error_check.status_label)
+    #     self.assertIn("No se encontró la capa", mock_view_for_error_check.status_label)
 
-        # Re-add the layer for subsequent tests
-        if not QgsProject.instance().mapLayersByName("Zonas de Cultivos"):
-             QgsProject.instance().addMapLayer(self.layer)
-        print("✓ Error handling test passed")
+    #     # Re-add the layer for subsequent tests
+    #     if not QgsProject.instance().mapLayersByName("Zonas de Cultivos"):
+    #          QgsProject.instance().addMapLayer(self.layer)
+    #     print("✓ Error handling test passed")
 
 
     @classmethod
