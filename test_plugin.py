@@ -5,7 +5,8 @@ import sys
 import os
 
 # Add the plugin directory to the Python path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+plugin_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, plugin_dir)
 
 from consulta_dialog import ConsultaDialog
 from controllers.crop_controller import CropController
