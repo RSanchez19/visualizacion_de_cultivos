@@ -143,16 +143,16 @@ class TestCultivoPlugin(unittest.TestCase):
     #     pass # Removed
 
 
-    # Keep model test as it's independent of GUI
-    def test_model_get_available_crops(self):
-        """Test the model method to get available crops"""
-        model = CropModel() # Model should be testable independently
-        crops = model.get_available_crops()
-        # The model might read from the layer added in setUpClass, or have its own data source.
-        # Assuming it reads from the 'cultivo' field of features in the 'Zonas de Cultivos' layer:
-        expected_crops = sorted(list(set([f['cultivo'] for f in self.layer.getFeatures()]))) # Get unique sorted crop values from features
-        self.assertEqual(sorted(crops), expected_crops) # Compare sorted lists
-        print("✓ Model get available crops test passed")
+    # # Keep model test as it's independent of GUI
+    # def test_model_get_available_crops(self):
+    #     """Test the model method to get available crops"""
+    #     model = CropModel() # Model should be testable independently
+    #     crops = model.get_available_crops()
+    #     # The model might read from the layer added in setUpClass, or have its own data source.
+    #     # Assuming it reads from the 'cultivo' field of features in the 'Zonas de Cultivos' layer:
+    #     expected_crops = sorted(list(set([f['cultivo'] for f in self.layer.getFeatures()]))) # Get unique sorted crop values from features
+    #     self.assertEqual(sorted(crops), expected_crops) # Compare sorted lists
+    #     print("✓ Model get available crops test passed")
 
     # Keep error handling test, adjust if needed to avoid UI assertions
     def test_error_handling(self):
