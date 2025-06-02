@@ -80,22 +80,25 @@ class TestCultivoPlugin(unittest.TestCase):
         # if QApplication.instance() is None:
         #      cls.app = QApplication([]) # Use empty list for sys.argv in headless
 
-        # Create a test vector layer
-        cls.layer = QgsVectorLayer("Point?crs=EPSG:4326&field=cultivo:string&field=produccion:integer&field=NOM_DPTO:string", "Zonas de Cultivos", "memory")
+        # Create a test vector layer with all expected fields
+        cls.layer = QgsVectorLayer("Point?crs=EPSG:4326&field=cultivo:string&field=produccion:integer&field=NOM_DPTO:string&field=CUL_MAIZ:integer&field=CUL_FRIJOL:integer&field=CUL_CAÑA_DE_AZUCAR:integer", "Zonas de Cultivos", "memory")
 
         # Add test features
         pr = cls.layer.dataProvider()
         features = []
 
-        # Add features with different crop types and production values
+        # Add features with different crop types, production values, and department
         # Ensure field names match the controller's expectations
+        # Data format: [cultivo, produccion_generic, departamento, cul_maiz, cul_frijol, cul_cana_de_azucar]
         test_data = [
-            (["Maíz", 5, "SAN SALVADOR"]),
-            (["Maíz", 15, "SAN SALVADOR"]),
-            (["Frijol", 8, "LA LIBERTAD"]),
-            (["Caña de azúcar", 20, "LA PAZ"]),
-            (["Maíz", 10, "SAN SALVADOR"]), # Additional data for testing queries
-            (["Frijol", 10, "LA LIBERTAD"]),
+            (["Maíz", 5, "SAN SALVADOR", 5, 0, 0]),
+            (["Maíz", 15, "SAN SALVADOR", 15, 0, 0]),
+            (["Frijol", 8, "LA LIBERTAD", 0, 8, 0]),
+            (["Caña de azúcar", 20, "LA PAZ", 0, 0, 20]),
+            (["Maíz", 10, "SAN SALVADOR", 10, 0, 0]), # Additional data for testing queries
+            (["Frijol", 10, "LA LIBERTAD", 0, 10, 0]),
+            (["Maíz", 0, "SAN SALVADOR", None, 0, 0]), # Test case for null or 0 production
+            (["Frijol", 0, "LA LIBERTAD", 0, None, 0]),
         ]
 
         for attrs in test_data:
