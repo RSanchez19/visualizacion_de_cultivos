@@ -1,6 +1,6 @@
 from qgis.core import QgsVectorLayer, QgsProject
-from models.crop_model import CropModel
-from views.crop_view import CropView
+from ..models.crop_model import CropModel
+from ..views.crop_view import CropView
 import unicodedata
 
 class CropController:
@@ -107,7 +107,6 @@ class CropController:
         root = QgsProject.instance().layerTreeRoot()
         group = root.findGroup(zona)
         if not group:
-            self.view.status_label.setText(f"No se encontró el grupo '{zona}'")
             return
         found = False
         # Primero, apagar todas las capas del grupo
