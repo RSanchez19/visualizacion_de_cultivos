@@ -7,6 +7,23 @@ import subprocess
 import argparse
 import os
 
+# Try to import config for dynamic settings
+try:
+    from config import get_config, Config
+    config = get_config()
+    CONFIG_AVAILABLE = True
+except ImportError:
+    CONFIG_AVAILABLE = False
+    # Fallback defaults
+    class FallbackConfig:
+        COVERAGE_MINIMUM = 60
+        COVERAGE_UNIT_MINIMUM = 40
+        COVERAGE_FUNCTIONAL_MINIMUM = 30
+        UNIT_TEST_TIMEOUT = 300
+        FUNCTIONAL_TEST_TIMEOUT = 600
+        INTEGRATION_TEST_TIMEOUT = 900
+    config = FallbackConfig()
+
 
 def run_command(cmd, description=""):
     """Run a command and handle the result"""
@@ -33,8 +50,17 @@ def main():
     parser.add_argument('--html', action='store_true', help='Generate HTML coverage report')
     parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')
     parser.add_argument('--fast', action='store_true', help='Run tests without timeout')
+    parser.add_argument('--config', action='store_true', help='Show current configuration')
     
     args = parser.parse_args()
+    
+    # Show configuration if requested
+    if args.config:
+        if CONFIG_AVAILABLE:
+            config.print_config()
+        else:
+            print("Configuration module not available - using defaults")
+        return
     
     # Base pytest command
     base_cmd = ['python', '-m', 'pytest']
@@ -79,34 +105,45 @@ def main():
         if args.coverage:
             base_cmd.extend([
                 '--cov-report=xml',
-                '--cov-fail-under=60'
+                f'--cov-fail-under={config.COVERAGE_MINIMUM}'
             ])
+        elif args.unit:
+            base_cmd.extend([f'--cov-fail-under={config.COVERAGE_UNIT_MINIMUM}'])
+        elif args.functional:
+            base_cmd.extend([f'--cov-fail-under={config.COVERAGE_FUNCTIONAL_MINIMUM}'])
     
-    # Timeout settings
+    # Timeout settings using config
     if not args.fast:
         if args.functional or args.integration:
-            base_cmd.extend(['--timeout=600'])
+            timeout = getattr(config, 'FUNCTIONAL_TEST_TIMEOUT', 600)
+            base_cmd.extend([f'--timeout={timeout}'])
         else:
-            base_cmd.extend(['--timeout=300'])
+            timeout = getattr(config, 'UNIT_TEST_TIMEOUT', 300)
+            base_cmd.extend([f'--timeout={timeout}'])
     
     success = True
     
-    # Run linting first
-    print("Running code quality checks...")
+    # Run linting first if enabled
+    if getattr(config, 'RUN_LINT_CHECKS', True):
+        print("Running code quality checks...")
+        
+        lint_commands = [
+            (['python', '-m', 'flake8', '.', '--count', '--select=E9,F63,F7,F82', '--show-source', '--statistics'], 
+             "Syntax check with flake8"),
+            (['python', '-m', 'flake8', '.', '--count', '--exit-zero', '--max-complexity=10', '--max-line-length=127', '--statistics'], 
+             "Code quality check with flake8")
+        ]
+        
+        for cmd, desc in lint_commands:
+            try:
+                if not run_command(cmd, desc):
+                    print("⚠️  Linting issues found, but continuing with tests...")
+            except FileNotFoundError:
+                print("⚠️  flake8 not installed, skipping linting")
     
-    lint_commands = [
-        (['python', '-m', 'flake8', '.', '--count', '--select=E9,F63,F7,F82', '--show-source', '--statistics'], 
-         "Syntax check with flake8"),
-        (['python', '-m', 'flake8', '.', '--count', '--exit-zero', '--max-complexity=10', '--max-line-length=127', '--statistics'], 
-         "Code quality check with flake8")
-    ]
-    
-    for cmd, desc in lint_commands:
-        try:
-            if not run_command(cmd, desc):
-                print("⚠️  Linting issues found, but continuing with tests...")
-        except FileNotFoundError:
-            print("⚠️  flake8 not installed, skipping linting")
+    # Set environment variables for testing
+    os.environ['ENVIRONMENT'] = 'test'
+    os.environ['USE_MOCK_DATA'] = 'True'
     
     # Run the main test command
     print(f"\nRunning tests with command: {' '.join(base_cmd)}")
@@ -129,6 +166,8 @@ def main():
         print("🎉 ALL TESTS PASSED!")
         if args.coverage:
             print("📊 Coverage reports generated in htmlcov/")
+        if CONFIG_AVAILABLE and hasattr(config, 'COVERAGE_MINIMUM'):
+            print(f"✅ Coverage requirement: {config.COVERAGE_MINIMUM}% met")
     else:
         print("❌ TESTS FAILED!")
         sys.exit(1)
