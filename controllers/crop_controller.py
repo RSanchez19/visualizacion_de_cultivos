@@ -16,6 +16,10 @@ class CropController:
         for radio in self.view.radio_departamentos:
             radio.toggled.connect(self.handle_departments_change)
         
+        # Connect table tab signals
+        self.view.btnConsultarTabla.clicked.connect(self.handle_table_query)
+        self.view.btnLimpiarTabla.clicked.connect(self.handle_table_clear)
+        
         # Initialize view
         self.view.set_available_crops(self.model.get_available_crops())
         self.view.set_departments_by_zone(self.view.get_selected_zone())
@@ -54,7 +58,10 @@ class CropController:
         cultivo_col_map = {
             "Maíz": "CUL_MAIZ",
             "Frijol": "CUL_FRIJOL",
-            "Caña de azúcar": "CUL_CAÑA_DE_AZUCAR"
+            "Caña de azúcar": "CUL_CAÑA_DE_AZUCAR",
+            "Papa": "CUL_PAPA",
+            "Café": "CUL_CAFE",
+            "Tomate": "CUL_TOMATE"
         }
         col_cultivo = cultivo_col_map.get(cultivo)
         if not col_cultivo:
@@ -152,3 +159,85 @@ class CropController:
             if lyr.name() == "Zonas de Cultivos":
                 lyr.removeSelection()
         self.view.status_label.setText("Formulario limpiado")
+
+    def handle_table_query(self):
+        """Handle the table query button click"""
+        # Buscar la capa 'Zonas de Cultivos'
+        layer = None
+        for lyr in QgsProject.instance().mapLayers().values():
+            if lyr.name() == "Zonas de Cultivos":
+                layer = lyr
+                break
+        if not layer:
+            self.view.show_error("No se encontró la capa 'Zonas de Cultivos' en el proyecto.")
+            return
+
+        # Obtener parámetros del formulario
+        cultivo = self.view.get_table_crop()
+        if not cultivo:
+            self.view.show_error("Seleccione un tipo de cultivo.")
+            return
+        top_count = self.view.get_top_count()
+        if top_count < 1 or top_count > 10:
+            self.view.show_error("El contador TOP debe estar entre 1 y 10.")
+            return
+        area_min = self.view.get_area_min()
+        area_max = self.view.get_area_max()
+        if area_min > area_max:
+            self.view.show_error("El área mínima no puede ser mayor que el área máxima.")
+            return
+
+        # Mapear el nombre del cultivo a la columna correspondiente
+        cultivo_col_map = {
+            "Maíz": "CUL_MAIZ",
+            "Frijol": "CUL_FRIJOL",
+            "Caña de azúcar": "CUL_CAÑA_DE_AZUCAR",
+            "Papa": "CUL_PAPA",
+            "Café": "CUL_CAFE",
+            "Tomate": "CUL_TOMATE"
+        }
+        col_cultivo = cultivo_col_map.get(cultivo)
+        if not col_cultivo:
+            self.view.show_error("Tipo de cultivo no válido.")
+            return
+
+        # Recopilar datos de todas las zonas
+        zonas_data = []
+        for feature in layer.getFeatures():
+            nom_dpto = feature["NOM_DPTO"]
+            nom_mun = feature["NOM_MUN"]
+            area_km2 = feature["AREA_KM2"]
+            nivel_produccion = feature[col_cultivo]
+            
+            # Solo incluir si tiene datos válidos y cumple con el rango de área
+            if (nom_dpto and nom_mun and area_km2 and nivel_produccion and 
+                area_min <= float(area_km2) <= area_max):
+                zonas_data.append({
+                    'departamento': nom_dpto,
+                    'municipio': nom_mun,
+                    'area': float(area_km2),
+                    'produccion': str(nivel_produccion).strip()
+                })
+
+        # Ordenar por área de mayor a menor y tomar el TOP N
+        zonas_data.sort(key=lambda x: x['area'], reverse=True)
+        top_zonas = zonas_data[:top_count]
+
+        # Preparar datos para la tabla
+        table_data = []
+        for zona in top_zonas:
+            table_data.append([
+                zona['departamento'],
+                zona['municipio'],
+                f"{zona['area']:.2f}",
+                zona['produccion']
+            ])
+
+        # Actualizar la tabla
+        self.view.update_table_data(table_data)
+        self.view.status_label.setText(f"TOP {top_count} zonas mostradas para {cultivo} (área: {area_min}-{area_max} km²)")
+
+    def handle_table_clear(self):
+        """Handle the table clear button click"""
+        self.view.clear_table()
+        self.view.status_label.setText("Tabla limpiada")

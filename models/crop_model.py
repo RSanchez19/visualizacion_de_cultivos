@@ -4,7 +4,7 @@ from datetime import datetime
 
 class CropModel:
     def __init__(self):
-        self.available_crops = ['Maíz', 'Frijol', 'Caña de azúcar']
+        self.available_crops = ['Maíz', 'Frijol', 'Caña de azúcar', 'Papa', 'Café', 'Tomate']
         
     def get_available_crops(self) -> List[str]:
         """Returns the list of available crops"""
