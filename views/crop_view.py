@@ -3,13 +3,128 @@ from qgis.PyQt.QtWidgets import (QDialog, QComboBox, QSpinBox, QPushButton,
                                 QMessageBox, QVBoxLayout, QHBoxLayout, QLabel,
                                 QGroupBox, QFormLayout, QTabWidget, QWidget,
                                 QCheckBox, QLineEdit, QScrollArea, QListWidget, QListWidgetItem,
-                                QRadioButton, QButtonGroup)
-from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtGui import QFont, QIcon
+                                QRadioButton, QButtonGroup, QTableWidget, QTableWidgetItem,
+                                QHeaderView, QSlider, QFrame)
+from qgis.PyQt.QtCore import Qt, pyqtSignal, QRectF, QPointF
+from qgis.PyQt.QtGui import QFont, QIcon, QPainter, QColor, QPen
 import os
 import unicodedata
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+
+class RangeSlider(QFrame):
+    """Widget personalizado para seleccionar un rango de valores"""
+    
+    rangeChanged = pyqtSignal(int, int)
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.min_value = 0
+        self.max_value = 700
+        self.range_min = 0
+        self.range_max = 700
+        self.dragging_min = False
+        self.dragging_max = False
+        self.setMinimumHeight(60)
+        self.setMaximumHeight(60)
+        
+    def setRange(self, min_val, max_val):
+        self.min_value = min_val
+        self.max_value = max_val
+        self.range_min = min_val
+        self.range_max = max_val
+        self.update()
+        
+    def getRange(self):
+        return self.range_min, self.range_max
+        
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            x = event.x()
+            width = self.width() - 20  # Margen de 10px en cada lado
+            
+            # Calcular posiciones de los handles
+            min_pos = 10 + int((self.range_min - self.min_value) / (self.max_value - self.min_value) * width)
+            max_pos = 10 + int((self.range_max - self.min_value) / (self.max_value - self.min_value) * width)
+            
+            # Verificar si se hizo clic en algún handle
+            if abs(x - min_pos) < 15:
+                self.dragging_min = True
+            elif abs(x - max_pos) < 15:
+                self.dragging_max = True
+                
+    def mouseMoveEvent(self, event):
+        if self.dragging_min or self.dragging_max:
+            x = max(10, min(event.x(), self.width() - 10))
+            width = self.width() - 20
+            
+            # Convertir posición a valor
+            value = int(self.min_value + ((x - 10) / width) * (self.max_value - self.min_value))
+            value = max(self.min_value, min(self.max_value, value))
+            
+            if self.dragging_min:
+                if value <= self.range_max:
+                    self.range_min = value
+                    self.rangeChanged.emit(self.range_min, self.range_max)
+            elif self.dragging_max:
+                if value >= self.range_min:
+                    self.range_max = value
+                    self.rangeChanged.emit(self.range_min, self.range_max)
+                    
+            self.update()
+            
+    def mouseReleaseEvent(self, event):
+        self.dragging_min = False
+        self.dragging_max = False
+        
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        width = self.width()
+        height = self.height()
+
+        # Parámetros visuales
+        margin = 20
+        track_height = 8
+        handle_radius = 10
+        track_y = height // 2
+        slider_width = width - 2 * margin
+
+        # Dibujar el track (barra de fondo)
+        track_rect = QRectF(margin, track_y - track_height // 2, slider_width, track_height)
+        painter.setBrush(QColor("#E0E0E0"))
+        painter.setPen(Qt.NoPen)
+        painter.drawRect(track_rect)
+
+        # Calcular posiciones de los handles
+        min_pos = margin + int((self.range_min - self.min_value) / (self.max_value - self.min_value) * slider_width)
+        max_pos = margin + int((self.range_max - self.min_value) / (self.max_value - self.min_value) * slider_width)
+
+        # Dibujar el rango seleccionado (azul semitransparente)
+        range_rect = QRectF(min_pos, track_y - track_height // 2, max_pos - min_pos, track_height)
+        painter.setBrush(QColor(25, 118, 210, 120))  # Azul semitransparente
+        painter.setPen(Qt.NoPen)
+        painter.drawRect(range_rect)
+
+        # Dibujar los handles
+        painter.setBrush(QColor("#1976D2"))
+        painter.setPen(QPen(QColor("#1565C0"), 2))
+        painter.drawEllipse(QPointF(min_pos, track_y), handle_radius, handle_radius)
+        painter.drawEllipse(QPointF(max_pos, track_y), handle_radius, handle_radius)
+
+        # Dibujar marcas de escala y etiquetas
+        painter.setPen(QPen(QColor("#999999"), 1))
+        font = painter.font()
+        font.setPointSize(8)
+        painter.setFont(font)
+        for i in range(self.min_value, self.max_value + 1, 100):
+            pos = margin + int((i - self.min_value) / (self.max_value - self.min_value) * slider_width)
+            painter.drawLine(pos, track_y + track_height // 2 + 4, pos, track_y + track_height // 2 + 10)
+            # Etiquetas cada 200 o en el extremo
+            if i % 200 == 0 or i == self.max_value or i == self.min_value:
+                text = str(i)
+                text_width = painter.fontMetrics().width(text)
+                painter.drawText(pos - text_width // 2, track_y + track_height // 2 + 25, text)
 
 class CropView(QDialog):
     def __init__(self, parent=None):
@@ -31,6 +146,7 @@ class CropView(QDialog):
         # Create tabs
         self.setup_query_tab(tab_widget)
         self.setup_stats_tab(tab_widget)
+        self.setup_table_tab(tab_widget)
         
         main_layout.addWidget(tab_widget)
         
@@ -199,7 +315,7 @@ class CropView(QDialog):
         self.cmbStatsCultivo = QComboBox()
         self.cmbStatsCultivo.setStyleSheet("QComboBox { padding: 4px; font-size: 14px; }")
         self.cmbStatsCultivo.addItems([
-            "Maíz", "Frijol", "Caña de azúcar"
+            "Maíz", "Frijol", "Caña de azúcar", "Papa", "Café", "Tomate"
         ])
         stats_filters_layout.addRow("Tipo de Cultivo:", self.cmbStatsCultivo)
 
@@ -237,7 +353,10 @@ class CropView(QDialog):
             cultivo_col_map = {
                 "Maíz": "CUL_MAIZ",
                 "Frijol": "CUL_FRIJOL",
-                "Caña de azúcar": "CUL_CAÑA_DE_AZUCAR"
+                "Caña de azúcar": "CUL_CAÑA_DE_AZUCAR",
+                "Papa": "CUL_PAPA",
+                "Café": "CUL_CAFE",
+                "Tomate": "CUL_TOMATE"
             }
             col_cultivo = cultivo_col_map.get(cultivo)
             if not col_cultivo:
@@ -288,6 +407,10 @@ class CropView(QDialog):
         # Conectar señal para actualizar datos
         self.cmbCultivo.currentIndexChanged.connect(self.update_data_section)
         self.update_data_section()
+        
+        # También configurar los cultivos en la pestaña de tabla
+        self.cmbTableCultivo.clear()
+        self.cmbTableCultivo.addItems(crops)
         
     def get_selected_crop(self):
         """Get the selected crop type"""
@@ -343,6 +466,9 @@ class CropView(QDialog):
             self.cmbProduccion.setCurrentIndex(0)
         self.lblFeatureCount.setText("0")
         self.status_label.setText("")
+        
+        # Limpiar también la pestaña de tabla
+        self.clear_table()
 
     def update_data_section(self):
         """Actualizar la sección de datos según el cultivo seleccionado"""
@@ -368,7 +494,7 @@ class CropView(QDialog):
                 ("Producción media", "14,000 toneladas"),
                 ("Producción baja", "7,500 toneladas")
             ],
-            "Arroz": [
+            "Papa": [
                 ("Producción alta", "6,800 toneladas"),
                 ("Producción media", "4,200 toneladas"),
                 ("Producción baja", "2,100 toneladas")
@@ -385,4 +511,174 @@ class CropView(QDialog):
                 text += f"&nbsp;&nbsp;• {label}: <b>{value}</b><br>"
         else:
             text = "No hay datos disponibles para este cultivo."
-        self.data_label.setText(text) 
+        self.data_label.setText(text)
+
+    def setup_table_tab(self, tab_widget):
+        """Setup the table tab"""
+        table_tab = QWidget()
+        layout = QVBoxLayout()
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(16)
+
+        # Filtros para tabla
+        table_filters_group = QGroupBox("Filtros de Tabla")
+        table_filters_group.setStyleSheet("QGroupBox { font-weight: bold; border: 2px solid #1976D2; border-radius: 8px; margin-top: 10px; padding: 10px; }")
+        table_filters_layout = QFormLayout()
+        table_filters_layout.setLabelAlignment(Qt.AlignRight)
+        table_filters_layout.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
+        table_filters_layout.setHorizontalSpacing(20)
+        table_filters_layout.setVerticalSpacing(10)
+
+        # Selector de cultivo
+        self.cmbTableCultivo = QComboBox()
+        self.cmbTableCultivo.setStyleSheet("QComboBox { padding: 4px; font-size: 14px; }")
+        self.cmbTableCultivo.addItems([
+            "Maíz", "Frijol", "Caña de azúcar", "Papa", "Café", "Tomate"
+        ])
+        table_filters_layout.addRow("Tipo de Cultivo:", self.cmbTableCultivo)
+
+        # Contador TOP
+        self.spnTopCount = QSpinBox()
+        self.spnTopCount.setStyleSheet("QSpinBox { padding: 4px; font-size: 14px; }")
+        self.spnTopCount.setMinimum(1)
+        self.spnTopCount.setMaximum(10)
+        self.spnTopCount.setValue(3)
+        table_filters_layout.addRow("TOP N:", self.spnTopCount)
+
+        # Rango de área (slider único)
+        self.rangeSlider = RangeSlider()
+        self.rangeSlider.setRange(0, 700)
+        
+        # Labels para mostrar los valores del rango
+        self.lblAreaRange = QLabel("0 - 700 km²")
+        self.lblAreaRange.setStyleSheet("font-size: 12px; color: #1976D2; font-weight: bold; padding: 5px;")
+        self.rangeSlider.rangeChanged.connect(lambda min_val, max_val: self.lblAreaRange.setText(f"{min_val} - {max_val} km²"))
+        
+        # Layout para el rango de área
+        area_range_layout = QVBoxLayout()
+        area_range_layout.setSpacing(5)
+        area_range_layout.addWidget(self.rangeSlider)
+        area_range_layout.addWidget(self.lblAreaRange, alignment=Qt.AlignCenter)
+        table_filters_layout.addRow("Rango de área:", area_range_layout)
+
+        table_filters_group.setLayout(table_filters_layout)
+        layout.addWidget(table_filters_group)
+
+        # Tabla de resultados
+        table_results_group = QGroupBox("Resultados")
+        table_results_group.setStyleSheet("QGroupBox { font-weight: bold; border: 2px solid #1976D2; border-radius: 8px; margin-top: 10px; padding: 10px; }")
+        table_results_layout = QVBoxLayout()
+
+        # Crear tabla
+        self.tableWidget = QTableWidget()
+        self.tableWidget.setStyleSheet("""
+            QTableWidget {
+                gridline-color: #E0E0E0;
+                background-color: white;
+                alternate-background-color: #F5F5F5;
+                selection-background-color: #1976D2;
+                selection-color: white;
+            }
+            QTableWidget::item {
+                padding: 8px;
+                border-bottom: 1px solid #E0E0E0;
+            }
+            QHeaderView::section {
+                background-color: #1976D2;
+                color: white;
+                padding: 8px;
+                border: none;
+                font-weight: bold;
+            }
+        """)
+        self.tableWidget.setAlternatingRowColors(True)
+        self.tableWidget.setColumnCount(4)
+        self.tableWidget.setHorizontalHeaderLabels(["Departamento", "Municipio", "Área (km²)", "Nivel de Producción"])
+        
+        # Configurar encabezados
+        header = self.tableWidget.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        
+        table_results_layout.addWidget(self.tableWidget)
+        table_results_group.setLayout(table_results_layout)
+        layout.addWidget(table_results_group)
+
+        # Botones
+        button_layout = QHBoxLayout()
+        self.btnConsultarTabla = QPushButton("Consultar")
+        self.btnConsultarTabla.setStyleSheet("""
+            QPushButton {
+                background-color: #1976D2;
+                color: white;
+                padding: 8px 20px;
+                border: none;
+                border-radius: 4px;
+                font-weight: bold;
+                font-size: 15px;
+            }
+            QPushButton:hover {
+                background-color: #1565C0;
+            }
+        """)
+        self.btnLimpiarTabla = QPushButton("Limpiar")
+        self.btnLimpiarTabla.setStyleSheet("""
+            QPushButton {
+                background-color: #90CAF9;
+                color: #0D47A1;
+                padding: 8px 20px;
+                border: none;
+                border-radius: 4px;
+                font-weight: bold;
+                font-size: 15px;
+            }
+            QPushButton:hover {
+                background-color: #64B5F6;
+            }
+        """)
+        button_layout.addWidget(self.btnConsultarTabla)
+        button_layout.addWidget(self.btnLimpiarTabla)
+        layout.addLayout(button_layout)
+
+        table_tab.setLayout(layout)
+        tab_widget.addTab(table_tab, "Tabla")
+
+    def get_table_crop(self):
+        """Get the selected crop from table tab"""
+        return self.cmbTableCultivo.currentText()
+        
+    def get_top_count(self):
+        """Get the top count value from table tab"""
+        return self.spnTopCount.value()
+        
+    def get_area_min(self):
+        """Get the minimum area value from table tab"""
+        return self.rangeSlider.getRange()[0]
+        
+    def get_area_max(self):
+        """Get the maximum area value from table tab"""
+        return self.rangeSlider.getRange()[1]
+        
+    def update_table_data(self, data):
+        """Update the table with new data"""
+        self.tableWidget.setRowCount(0)  # Clear existing rows
+        
+        if not data:
+            return
+            
+        for row, item_data in enumerate(data):
+            self.tableWidget.insertRow(row)
+            for col, value in enumerate(item_data):
+                item = QTableWidgetItem(str(value))
+                item.setTextAlignment(Qt.AlignCenter)
+                self.tableWidget.setItem(row, col, item)
+                
+    def clear_table(self):
+        """Clear the table data"""
+        self.tableWidget.setRowCount(0)
+        self.cmbTableCultivo.setCurrentIndex(0)
+        self.spnTopCount.setValue(3)
+        self.rangeSlider.setRange(0, 700)
+        self.lblAreaRange.setText("0 - 700 km²") 
