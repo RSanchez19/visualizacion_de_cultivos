@@ -1,0 +1,248 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, "3.10", "3.11"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          xvfb \
+          libqt5gui5 \
+          libqt5core5a \
+          libqt5widgets5 \
+          qt5-qmake \
+          qtbase5-dev \
+          qttools5-dev-tools \
+          libgdal-dev \
+          gdal-bin \
+          python3-gdal
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        # Install additional test dependencies if needed
+        pip install pytest-xvfb pytest-timeout
+
+    - name: Lint with flake8
+      run: |
+        pip install flake8
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Run unit tests with coverage
+      run: |
+        xvfb-run -a pytest tests/unit/ \
+          --verbose \
+          --cov=. \
+          --cov-branch \
+          --cov-report=xml:coverage-unit.xml \
+          --cov-report=html:htmlcov-unit \
+          --cov-report=term-missing \
+          --cov-fail-under=40 \
+          --timeout=300 \
+          -m unit
+
+    - name: Run functional tests with coverage
+      run: |
+        xvfb-run -a pytest tests/functional/ \
+          --verbose \
+          --cov=. \
+          --cov-branch \
+          --cov-report=xml:coverage-functional.xml \
+          --cov-report=html:htmlcov-functional \
+          --cov-report=term-missing \
+          --cov-fail-under=30 \
+          --timeout=600 \
+          -m functional
+
+    - name: Run all tests with combined coverage
+      run: |
+        xvfb-run -a pytest tests/ \
+          --verbose \
+          --cov=. \
+          --cov-branch \
+          --cov-report=xml:coverage.xml \
+          --cov-report=html:htmlcov \
+          --cov-report=term-missing \
+          --cov-fail-under=60 \
+          --timeout=600
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml,./coverage-unit.xml,./coverage-functional.xml
+        flags: unittests,functionaltests
+        name: codecov-umbrella
+        fail_ci_if_error: true
+
+    - name: Upload coverage to artifacts
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: coverage-report-${{ matrix.python-version }}
+        path: |
+          htmlcov/
+          coverage.xml
+          htmlcov-unit/
+          coverage-unit.xml
+          htmlcov-functional/
+          coverage-functional.xml
+
+    - name: Comment coverage on PR
+      if: github.event_name == 'pull_request'
+      uses: py-cov-action/python-coverage-comment-action@v3
+      with:
+        GITHUB_TOKEN: ${{ github.token }}
+        MINIMUM_GREEN: 60
+        MINIMUM_ORANGE: 40
+
+  quality-checks:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black isort mypy bandit safety
+
+    - name: Check code formatting with Black
+      run: |
+        black --check --diff .
+
+    - name: Check import sorting with isort
+      run: |
+        isort --check-only --diff .
+
+    - name: Type checking with mypy
+      run: |
+        mypy . --ignore-missing-imports || true
+
+    - name: Security analysis with bandit
+      run: |
+        bandit -r . -f json -o bandit-report.json || true
+        bandit -r . || true
+
+    - name: Safety check for dependencies
+      run: |
+        safety check --json --output safety-report.json || true
+        safety check || true
+
+    - name: Upload quality reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: quality-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+
+  integration-test:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          xvfb \
+          libqt5gui5 \
+          libqt5core5a \
+          libqt5widgets5 \
+          qt5-qmake \
+          qtbase5-dev \
+          qttools5-dev-tools \
+          libgdal-dev \
+          gdal-bin \
+          python3-gdal
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run integration tests
+      run: |
+        xvfb-run -a pytest tests/ \
+          --verbose \
+          --timeout=900 \
+          -m "functional or integration"
+
+    - name: Test plugin installation
+      run: |
+        python -c "
+        import sys
+        sys.path.append('.')
+        try:
+            from plugin import classFactory
+            print('Plugin import successful')
+        except Exception as e:
+            print(f'Plugin import failed: {e}')
+            sys.exit(1)
+        "
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [test, quality-checks, integration-test]
+    if: always()
+    
+    steps:
+    - name: Notify success
+      if: needs.test.result == 'success' && needs.quality-checks.result == 'success'
+      run: |
+        echo "✅ All tests passed and quality checks successful!"
+        echo "Coverage requirement of 60% met."
+
+    - name: Notify failure
+      if: needs.test.result == 'failure' || needs.quality-checks.result == 'failure' || needs.integration-test.result == 'failure'
+      run: |
+        echo "❌ Pipeline failed!"
+        echo "Test result: ${{ needs.test.result }}"
+        echo "Quality checks result: ${{ needs.quality-checks.result }}"
+        echo "Integration test result: ${{ needs.integration-test.result }}"
+        exit 1 

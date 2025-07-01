@@ -1,0 +1,1 @@
+# Tests package for visualizacion_de_cultivos QGIS plugin 
