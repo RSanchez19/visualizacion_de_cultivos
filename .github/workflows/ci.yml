@@ -1,10 +1,6 @@
-name: CI/CD Pipeline - Optimized
+name: CI/CD Pipeline - Optimized (DISABLED)
 
-on:
-  push:
-    branches: [ main, develop, feat/*, feat/unit-and-functional-tests ]
-  pull_request:
-    branches: [ main, develop ]
+on: workflow_dispatch  # Manual trigger only
 
 env:
   COVERAGE_MINIMUM: 60

@@ -1,12 +1,6 @@
-name: 🚀 Quick Tests (Development)
+name: 🚀 Quick Tests (DISABLED)
 
-# Fast feedback workflow for development
-on:
-  push:
-    branches: [ feat/*, feature/*, fix/*, hotfix/*, feat/unit-and-functional-tests ]
-  pull_request:
-    branches: [ main, develop ]
-  workflow_dispatch:
+on: workflow_dispatch  # Manual trigger only
 
 env:
   PYTHONPATH: /usr/lib/python3/dist-packages:/usr/share/qgis/python

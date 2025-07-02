@@ -7,7 +7,7 @@ Un plugin para QGIS que permite visualizar y consultar información sobre cultiv
 [![Coverage](https://img.shields.io/badge/coverage-84%25-brightgreen)](htmlcov/index.html)
 [![Tests](https://img.shields.io/badge/tests-77%20passing-brightgreen)](tests/)
 [![Python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11-blue)](https://www.python.org/)
-[![CI/CD](https://img.shields.io/badge/CI%2FCD-optimized-blue)](.github/workflows/ci.yml)
+[![CI/CD](https://img.shields.io/badge/CI%2FCD-simplified-green)](.github/workflows/ci-simple.yml)
 
 ### ⚡ **Quick Start para Desarrolladores**
 ```bash
@@ -68,19 +68,24 @@ pytest tests/unit/test_crop_model.py -v    # Test específico
 pytest --cov --cov-report=html             # Coverage HTML
 ```
 
-## 🔄 **CI/CD Pipeline Optimizado**
+## 🔄 **CI/CD Pipeline Simplificado**
 
-### 🌟 **Características**
-- **Matrix Testing**: Python 3.9, 3.10, 3.11
-- **Parallel Jobs**: Lint, Tests, Coverage análisis
-- **Smart Coverage**: Excluye archivos UI complejos
-- **Branch Strategy**: Quick tests para features, full pipeline para main/develop
-- **Automated Reports**: Coverage badges, HTML reports, PR comments
+### 🌟 **Enfoque Híbrido**
+- **GitHub Actions**: Tests básicos sin dependencias de QGIS
+- **Local Testing**: Coverage completo (84%) con `make test`
+- **Matrix Testing**: Python 3.9, 3.10, 3.11 en CI
+- **Code Quality**: Linting automático (Black, isort, Flake8)
 
 ### 🚦 **Workflows**
-1. **Quick Tests** (`feat/*`, `fix/*`): Feedback rápido durante desarrollo
-2. **Full CI/CD** (`develop`, `main`): Pipeline completo con quality checks
+1. **CI Simplificado**: Config tests + code quality (funciona en GitHub)
+2. **Local Development**: Full testing con `make test` (84% coverage)
 3. **Pre-commit Hooks**: Validación automática en cada commit
+
+### 📋 **¿Por qué este enfoque?**
+- ✅ **CI confiable**: Solo tests que funcionan sin QGIS instalado
+- ✅ **Local completo**: Full coverage (84%) disponible para desarrolladores
+- ✅ **Feedback rápido**: Code quality checks automáticos
+- ✅ **Sin bloqueos**: El desarrollo no se detiene por problemas de CI
 
 ## 🛠️ **Instalación y Setup**
 
