@@ -193,6 +193,9 @@ class TestCropController:
     @pytest.mark.unit
     def test_handle_zone_change(self):
         """Test handle_zone_change method"""
+        # Reset mock calls from initialization
+        self.mock_view.set_departments_by_zone.reset_mock()
+        
         self.mock_view.get_selected_zone.return_value = "Zona_Central"
         
         self.controller.handle_zone_change()
@@ -211,6 +214,9 @@ class TestCropController:
         mock_group = Mock()
         mock_child = Mock()
         mock_layer = Mock()
+        
+        # Make the mock child appear as QgsLayerTreeLayer for isinstance check
+        mock_child.__class__.__name__ = 'QgsLayerTreeLayer'
         
         mock_root.findGroup.return_value = mock_group
         mock_group.children.return_value = [mock_child]

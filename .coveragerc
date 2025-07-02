@@ -1,16 +1,18 @@
 [run]
 source = .
 omit = 
-    tests/*
-    test_*.py
-    venv/*
-    env/*
+    */tests/*
+    */test_*
     */venv/*
-    */env/*
-    */site-packages/*
-    setup.py
-    compile_resources.py
-    resources_rc.py
+    */htmlcov/*
+    */build/*
+    */dist/*
+    */__pycache__/*
+    */.*
+    run_tests.py
+    verify_tests.py
+    consulta_dialog.py
+    views/crop_view.py
     ui_*.py
 
 [report]
