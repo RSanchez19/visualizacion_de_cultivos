@@ -45,8 +45,13 @@ class TestConfig:
         assert hasattr(cfg, 'TEST_OCCIDENTE_GPKG_PATH')
     
     @pytest.mark.unit
+    @patch.dict(os.environ, {}, clear=True)
     def test_config_default_values(self):
-        """Test Config default values are correct"""
+        """Test Config has correct default values when no environment variables are set"""
+        # Force reload the module to pick up cleared environment
+        import importlib
+        importlib.reload(config)
+        
         cfg = config.Config
         
         assert cfg.PROJECT_NAME == 'visualizacion_de_cultivos'
@@ -74,6 +79,22 @@ class TestConfig:
         assert cfg.PROJECT_VERSION == '1.0.0'
         assert cfg.DEBUG is True
         assert cfg.ENVIRONMENT == 'test'
+
+    @pytest.mark.unit
+    @patch.dict(os.environ, {'ENVIRONMENT': 'test'})
+    def test_config_ci_environment(self):
+        """Test Config behavior in CI environment (ENVIRONMENT=test)"""
+        # Force reload the module to pick up env vars
+        import importlib
+        importlib.reload(config)
+        
+        cfg = config.Config
+        assert cfg.ENVIRONMENT == 'test'
+        assert cfg.is_testing() is True
+        assert cfg.is_development() is False
+        assert cfg.is_production() is False
+        # Test that data path returns test data path
+        assert cfg.get_data_path() == cfg.TEST_CULTIVOS_GPKG_PATH
     
     @pytest.mark.unit
     def test_get_data_path_development(self):
