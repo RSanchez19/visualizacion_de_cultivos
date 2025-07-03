@@ -1,7 +1,7 @@
 from qgis.PyQt.QtWidgets import QAction
 from qgis.PyQt.QtGui import QIcon
 import os
-from .controllers.crop_controller import CropController
+from controllers.crop_controller import CropController
 
 class VisualizacionCultivosPlugin:
     def __init__(self, iface):

@@ -1,0 +1,22 @@
+[run]
+source = .
+omit = 
+    */tests/*
+    */test_*
+    */venv/*
+    */htmlcov/*
+    setup.py
+    run_tests.py
+    verify_tests.py
+    views/crop_view.py
+    consulta_dialog.py
+    ui_consulta_dialog.py
+    compile_resources.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:

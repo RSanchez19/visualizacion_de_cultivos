@@ -1,6 +1,6 @@
-from qgis.core import QgsVectorLayer, QgsProject
-from ..models.crop_model import CropModel
-from ..views.crop_view import CropView
+from qgis.core import QgsVectorLayer, QgsProject, QgsLayerTreeLayer
+from models.crop_model import CropModel
+from views.crop_view import CropView
 import unicodedata
 
 class CropController:
@@ -110,7 +110,6 @@ class CropController:
         departamentos = self.view.get_selected_departments()
         if not departamentos:
             return
-        from qgis.core import QgsLayerTreeLayer
         root = QgsProject.instance().layerTreeRoot()
         group = root.findGroup(zona)
         if not group:
@@ -118,19 +117,27 @@ class CropController:
         found = False
         # Primero, apagar todas las capas del grupo
         for child in group.children():
-            if isinstance(child, QgsLayerTreeLayer):
+            try:
+                # Try to call setItemVisibilityChecked - this will work for QgsLayerTreeLayer objects
                 child.setItemVisibilityChecked(False)
+            except AttributeError:
+                # Skip if this child doesn't have the method
+                continue
         # Luego, encender solo la seleccionada
         for child in group.children():
-            if isinstance(child, QgsLayerTreeLayer) and child.name() in departamentos:
-                child.setItemVisibilityChecked(True)
-                layer = child.layer()
-                if layer:
-                    self.iface.setActiveLayer(layer)
-                    # Seleccionar todos los features para sombrear
-                    layer.removeSelection()
-                    layer.selectAll()
-                found = True
+            try:
+                if hasattr(child, 'name') and child.name() in departamentos:
+                    child.setItemVisibilityChecked(True)
+                    layer = child.layer()
+                    if layer:
+                        self.iface.setActiveLayer(layer)
+                        # Seleccionar todos los features para sombrear
+                        layer.removeSelection()
+                        layer.selectAll()
+                    found = True
+            except AttributeError:
+                # Skip if this child doesn't have the methods we need
+                continue
         if not found:
             self.view.status_label.setText(f"No se encontraron las capas seleccionadas en el grupo '{zona}'")
         else:
