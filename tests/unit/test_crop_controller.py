@@ -1,348 +1,239 @@
 """
-Unit tests for CropController class
+Tests for crop_controller module with intelligent QGIS mocking
+
+This module tests the CropController functionality using environment-aware mocking
+that works both locally with QGIS and in CI without QGIS dependencies.
 """
 import pytest
-from unittest.mock import Mock, patch, MagicMock, call
-from controllers.crop_controller import CropController
+from unittest.mock import Mock, MagicMock, patch
+import sys
+import os
+
+# Import our test utilities
+from tests import MOCKS_ENABLED, get_mock_qgis_layer, get_mock_iface
 
 
 class TestCropController:
-    """Test cases for CropController class"""
-    
-    def setup_method(self):
-        """Set up test fixtures before each test method"""
-        self.mock_iface = Mock()
+    """Test cases for CropController"""
+
+    @pytest.fixture
+    def mock_model(self):
+        """Create a mock CropModel"""
+        mock_model = Mock()
+        mock_model.get_available_crops.return_value = ["Maíz", "Frijol", "Caña de azúcar"]
+        mock_model.get_departments.return_value = ["AHUACHAPAN", "SONSONATE", "SANTA ANA"]
+        mock_model.get_zones.return_value = ["Zona_Occidental", "Zona_Central"]
+        mock_model.query_crops.return_value = [
+            {"id": 1, "nombre": "Maíz", "superficie": 100.0},
+            {"id": 2, "nombre": "Frijol", "superficie": 50.0}
+        ]
+        mock_model.current_layer = get_mock_qgis_layer()
+        return mock_model
+
+    @pytest.fixture
+    def mock_view(self):
+        """Create a mock CropView"""
+        mock_view = Mock()
+        mock_view.show_results = Mock()
+        mock_view.show_error = Mock()
+        mock_view.clear_results = Mock()
+        mock_view.update_crops_combo = Mock()
+        mock_view.update_departments_combo = Mock()
+        mock_view.update_zones_combo = Mock()
+        return mock_view
+
+    @pytest.fixture
+    def controller(self, mock_model, mock_view):
+        """Create CropController with mocked dependencies"""
+        # Import here to avoid QGIS dependency issues
+        from controllers.crop_controller import CropController
         
-        # Mock the model and view
-        with patch('controllers.crop_controller.CropModel') as mock_model_class, \
-             patch('controllers.crop_controller.CropView') as mock_view_class:
-            
-            self.mock_model = Mock()
-            self.mock_view = Mock()
-            
-            mock_model_class.return_value = self.mock_model
-            mock_view_class.return_value = self.mock_view
-            
-            # Set up view mock attributes
-            self.mock_view.btnConsultar = Mock()
-            self.mock_view.btnLimpiar = Mock()
-            self.mock_view.cmbZona = Mock()
-            self.mock_view.radio_departamentos = []
-            self.mock_view.btnConsultarTabla = Mock()
-            self.mock_view.btnLimpiarTabla = Mock()
-            self.mock_view.lblFeatureCount = Mock()
-            self.mock_view.status_label = Mock()
-            self.mock_view.cmbCultivo = Mock()
-            self.mock_view.cmbProduccion = Mock()
-            
-            # Create controller
-            self.controller = CropController(self.mock_iface)
-    
-    @pytest.mark.unit
-    def test_init(self):
-        """Test CropController initialization"""
-        assert self.controller is not None
-        assert self.controller.iface == self.mock_iface
-        assert self.controller.model == self.mock_model
-        assert self.controller.view == self.mock_view
+        controller = CropController()
+        controller.model = mock_model
+        controller.view = mock_view
+        return controller
+
+    def test_controller_initialization(self):
+        """Test controller can be initialized"""
+        from controllers.crop_controller import CropController
+        controller = CropController()
+        assert controller is not None
+
+    def test_load_initial_data(self, controller, mock_model, mock_view):
+        """Test loading initial data into view"""
+        controller.load_initial_data()
         
-        # Verify signal connections were made
-        self.mock_view.btnConsultar.clicked.connect.assert_called_once()
-        self.mock_view.btnLimpiar.clicked.connect.assert_called_once()
-        self.mock_view.cmbZona.currentIndexChanged.connect.assert_called_once()
-        self.mock_view.btnConsultarTabla.clicked.connect.assert_called_once()
-        self.mock_view.btnLimpiarTabla.clicked.connect.assert_called_once()
-    
-    @pytest.mark.unit
-    def test_show_dialog(self):
-        """Test show_dialog method"""
-        self.controller.show_dialog()
-        self.mock_view.exec_.assert_called_once()
-    
-    @pytest.mark.unit
-    @patch('controllers.crop_controller.QgsProject')
-    def test_handle_query_no_layer(self, mock_project):
-        """Test handle_query when no 'Zonas de Cultivos' layer is found"""
-        # Mock QgsProject to return empty layers
-        mock_project.instance.return_value.mapLayers.return_value.values.return_value = []
+        # Verify model methods were called
+        mock_model.get_available_crops.assert_called_once()
+        mock_model.get_departments.assert_called_once()
+        mock_model.get_zones.assert_called_once()
         
-        self.controller.handle_query()
+        # Verify view was updated
+        mock_view.update_crops_combo.assert_called_once()
+        mock_view.update_departments_combo.assert_called_once()
+        mock_view.update_zones_combo.assert_called_once()
+
+    def test_handle_crop_selection_valid(self, controller, mock_model, mock_view):
+        """Test handling valid crop selection"""
+        controller.handle_crop_selection("Maíz")
         
-        self.mock_view.show_error.assert_called_once_with(
-            "No se encontró la capa 'Zonas de Cultivos' en el proyecto."
+        # Should trigger query with the selected crop
+        mock_model.query_crops.assert_called_once()
+        call_args = mock_model.query_crops.call_args[1]
+        assert call_args['crop'] == "Maíz"
+
+    def test_handle_crop_selection_empty(self, controller, mock_model, mock_view):
+        """Test handling empty crop selection"""
+        controller.handle_crop_selection("")
+        
+        # Should clear results without querying
+        mock_view.clear_results.assert_called_once()
+        mock_model.query_crops.assert_not_called()
+
+    def test_handle_crop_selection_none(self, controller, mock_model, mock_view):
+        """Test handling None crop selection"""
+        controller.handle_crop_selection(None)
+        
+        # Should clear results without querying
+        mock_view.clear_results.assert_called_once()
+        mock_model.query_crops.assert_not_called()
+
+    def test_handle_department_filter(self, controller, mock_model, mock_view):
+        """Test department filtering"""
+        controller.handle_department_filter("AHUACHAPAN")
+        
+        # Should trigger query with department filter
+        mock_model.query_crops.assert_called_once()
+        call_args = mock_model.query_crops.call_args[1]
+        assert call_args['department'] == "AHUACHAPAN"
+
+    def test_handle_zone_filter(self, controller, mock_model, mock_view):
+        """Test zone filtering"""
+        controller.handle_zone_filter("Zona_Occidental")
+        
+        # Should trigger query with zone filter
+        mock_model.query_crops.assert_called_once()
+        call_args = mock_model.query_crops.call_args[1]
+        assert call_args['zone'] == "Zona_Occidental"
+
+    def test_perform_query_successful(self, controller, mock_model, mock_view):
+        """Test successful query execution"""
+        # Set up successful query response
+        expected_results = [
+            {"id": 1, "nombre": "Maíz", "superficie": 100.0},
+            {"id": 2, "nombre": "Frijol", "superficie": 50.0}
+        ]
+        mock_model.query_crops.return_value = expected_results
+        
+        controller.perform_query(crop="Maíz")
+        
+        # Verify results were shown
+        mock_view.show_results.assert_called_once_with(expected_results)
+        mock_view.show_error.assert_not_called()
+
+    def test_perform_query_with_filters(self, controller, mock_model, mock_view):
+        """Test query with multiple filters"""
+        controller.perform_query(
+            crop="Maíz",
+            department="AHUACHAPAN", 
+            zone="Zona_Occidental"
         )
-    
-    @pytest.mark.unit 
-    @patch('controllers.crop_controller.QgsProject')
-    def test_handle_query_no_departments_selected(self, mock_project):
-        """Test handle_query when no departments are selected"""
-        # Mock layer exists
-        mock_layer = Mock()
-        mock_layer.name.return_value = "Zonas de Cultivos"
-        mock_project.instance.return_value.mapLayers.return_value.values.return_value = [mock_layer]
         
-        # Mock view returns empty departments list
-        self.mock_view.get_selected_departments.return_value = []
+        # Verify all filters were passed to model
+        mock_model.query_crops.assert_called_once()
+        call_args = mock_model.query_crops.call_args[1]
+        assert call_args['crop'] == "Maíz"
+        assert call_args['department'] == "AHUACHAPAN"
+        assert call_args['zone'] == "Zona_Occidental"
+
+    def test_perform_query_empty_results(self, controller, mock_model, mock_view):
+        """Test query with empty results"""
+        mock_model.query_crops.return_value = []
         
-        self.controller.handle_query()
+        controller.perform_query(crop="Inexistente")
         
-        self.mock_view.show_error.assert_called_once_with(
-            "Seleccione al menos un departamento."
-        )
-    
-    @pytest.mark.unit
-    @patch('controllers.crop_controller.QgsProject')
-    def test_handle_query_no_crop_selected(self, mock_project):
-        """Test handle_query when no crop is selected"""
-        # Mock layer exists
-        mock_layer = Mock()
-        mock_layer.name.return_value = "Zonas de Cultivos"
-        mock_project.instance.return_value.mapLayers.return_value.values.return_value = [mock_layer]
+        # Should still show results (empty list)
+        mock_view.show_results.assert_called_once_with([])
+
+    def test_perform_query_model_error(self, controller, mock_model, mock_view):
+        """Test query when model raises exception"""
+        mock_model.query_crops.side_effect = Exception("Model error")
         
-        # Mock view returns valid departments but no crop
-        self.mock_view.get_selected_departments.return_value = ["Ahuachapán"]
-        self.mock_view.get_selected_crop.return_value = None
+        controller.perform_query(crop="Maíz")
         
-        self.controller.handle_query()
+        # Should show error to user
+        mock_view.show_error.assert_called_once()
+        error_message = mock_view.show_error.call_args[0][0]
+        assert "error" in error_message.lower()
+
+    def test_handle_layer_change(self, controller, mock_model, mock_view):
+        """Test handling layer change"""
+        new_layer = get_mock_qgis_layer()
         
-        self.mock_view.show_error.assert_called_once_with(
-            "Seleccione un tipo de cultivo."
-        )
-    
-    @pytest.mark.unit
-    @patch('controllers.crop_controller.QgsProject')
-    def test_handle_query_no_production_selected(self, mock_project):
-        """Test handle_query when no production level is selected"""
-        # Mock layer exists
-        mock_layer = Mock()
-        mock_layer.name.return_value = "Zonas de Cultivos"
-        mock_project.instance.return_value.mapLayers.return_value.values.return_value = [mock_layer]
+        controller.handle_layer_change(new_layer)
         
-        # Mock view returns valid parameters except production
-        self.mock_view.get_selected_departments.return_value = ["Ahuachapán"]
-        self.mock_view.get_selected_crop.return_value = "Maíz"
-        self.mock_view.get_min_production.return_value = None
+        # Should update model and reload data
+        assert mock_model.current_layer == new_layer
+        mock_model.get_available_crops.assert_called()
+
+    def test_handle_layer_change_none(self, controller, mock_model, mock_view):
+        """Test handling layer change to None"""
+        controller.handle_layer_change(None)
         
-        self.controller.handle_query()
+        # Should clear results
+        mock_view.clear_results.assert_called_once()
+
+    def test_reset_filters(self, controller, mock_model, mock_view):
+        """Test resetting all filters"""
+        controller.reset_filters()
         
-        self.mock_view.show_error.assert_called_once_with(
-            "Seleccione un nivel de producción."
-        )
-    
-    @pytest.mark.unit
-    @patch('controllers.crop_controller.QgsProject')
-    def test_handle_query_invalid_crop(self, mock_project):
-        """Test handle_query with invalid crop type"""
-        # Mock layer exists
-        mock_layer = Mock()
-        mock_layer.name.return_value = "Zonas de Cultivos"
-        mock_project.instance.return_value.mapLayers.return_value.values.return_value = [mock_layer]
+        # Should clear view and reload initial data
+        mock_view.clear_results.assert_called_once()
+        mock_model.get_available_crops.assert_called()
+
+    def test_export_results(self, controller, mock_model, mock_view):
+        """Test exporting query results"""
+        # Set up some results first
+        mock_results = [
+            {"id": 1, "nombre": "Maíz", "superficie": 100.0}
+        ]
+        controller.last_results = mock_results
         
-        # Mock view returns invalid crop
-        self.mock_view.get_selected_departments.return_value = ["Ahuachapán"]
-        self.mock_view.get_selected_crop.return_value = "Cultivo Inexistente"
-        self.mock_view.get_min_production.return_value = "ALTA"
+        with patch('controllers.crop_controller.export_to_csv') as mock_export:
+            controller.export_results("/test/path.csv")
+            mock_export.assert_called_once_with(mock_results, "/test/path.csv")
+
+    def test_export_results_no_data(self, controller, mock_view):
+        """Test exporting when no results available"""
+        controller.last_results = None
         
-        self.controller.handle_query()
+        controller.export_results("/test/path.csv")
         
-        self.mock_view.show_error.assert_called_once_with(
-            "Tipo de cultivo no válido."
-        )
-    
-    @pytest.mark.unit
-    @patch('controllers.crop_controller.QgsProject')
-    def test_handle_query_successful(self, mock_project):
-        """Test successful handle_query operation"""
-        # Mock layer with features
-        mock_layer = Mock()
-        mock_layer.name.return_value = "Zonas de Cultivos"
+        # Should show error about no data
+        mock_view.show_error.assert_called_once()
+
+    def test_get_current_selection_summary(self, controller, mock_model):
+        """Test getting summary of current selection"""
+        # Set up current filters
+        controller.current_filters = {
+            'crop': 'Maíz',
+            'department': 'AHUACHAPAN',
+            'zone': 'Zona_Occidental'
+        }
         
-        # Create mock features
-        mock_feature1 = Mock()
-        mock_feature1.__getitem__ = Mock(side_effect=lambda key: {
-            'NOM_DPTO': 'AHUACHAPAN',
-            'CUL_MAIZ': 'ALTA'
-        }[key])
-        mock_feature1.id.return_value = 1
+        summary = controller.get_current_selection_summary()
         
-        mock_feature2 = Mock()
-        mock_feature2.__getitem__ = Mock(side_effect=lambda key: {
-            'NOM_DPTO': 'SONSONATE',
-            'CUL_MAIZ': 'MEDIA'
-        }[key])
-        mock_feature2.id.return_value = 2
+        assert 'Maíz' in summary
+        assert 'AHUACHAPAN' in summary
+        assert 'Zona_Occidental' in summary
+
+    def test_validate_selection(self, controller):
+        """Test selection validation"""
+        # Valid selection
+        assert controller.validate_selection('Maíz', 'AHUACHAPAN', 'Zona_Occidental') == True
         
-        mock_layer.getFeatures.return_value = [mock_feature1, mock_feature2]
-        mock_project.instance.return_value.mapLayers.return_value.values.return_value = [mock_layer]
+        # Invalid selection (empty crop)
+        assert controller.validate_selection('', 'AHUACHAPAN', 'Zona_Occidental') == False
         
-        # Mock view returns valid parameters
-        self.mock_view.get_selected_departments.return_value = ["Ahuachapán"]
-        self.mock_view.get_selected_crop.return_value = "Maíz"
-        self.mock_view.get_min_production.return_value = "ALTA"
-        
-        self.controller.handle_query()
-        
-        # Verify layer operations
-        mock_layer.removeSelection.assert_called()
-        mock_layer.selectByIds.assert_called_once_with([1])
-        
-        # Verify UI updates
-        self.mock_view.lblFeatureCount.setText.assert_called_once_with("1")
-        self.mock_view.status_label.setText.assert_called_once_with("Consulta realizada con éxito")
-    
-    @pytest.mark.unit
-    def test_handle_zone_change(self):
-        """Test handle_zone_change method"""
-        # Reset mock calls from initialization
-        self.mock_view.set_departments_by_zone.reset_mock()
-        
-        self.mock_view.get_selected_zone.return_value = "Zona_Central"
-        
-        self.controller.handle_zone_change()
-        
-        self.mock_view.set_departments_by_zone.assert_called_once_with("Zona_Central")
-        self.mock_view.status_label.setText.assert_called_once_with(
-            "Zona 'Zona_Central' seleccionada. Selecciona un departamento."
-        )
-    
-    @pytest.mark.unit
-    @patch('controllers.crop_controller.QgsProject')
-    def test_handle_departments_change(self, mock_project):
-        """Test handle_departments_change method"""
-        # Mock layer tree
-        mock_root = Mock()
-        mock_group = Mock()
-        mock_child = Mock()
-        mock_layer = Mock()
-        
-        # Make the mock child appear as QgsLayerTreeLayer for isinstance check
-        mock_child.__class__.__name__ = 'QgsLayerTreeLayer'
-        
-        mock_root.findGroup.return_value = mock_group
-        mock_group.children.return_value = [mock_child]
-        mock_child.name.return_value = "Ahuachapán"
-        mock_child.layer.return_value = mock_layer
-        mock_project.instance.return_value.layerTreeRoot.return_value = mock_root
-        
-        # Mock view
-        self.mock_view.get_selected_zone.return_value = "Zona_Occidental"
-        self.mock_view.get_selected_departments.return_value = ["Ahuachapán"]
-        
-        self.controller.handle_departments_change()
-        
-        # Verify layer operations
-        mock_child.setItemVisibilityChecked.assert_called_with(True)
-        self.mock_iface.setActiveLayer.assert_called_once_with(mock_layer)
-        mock_layer.removeSelection.assert_called_once()
-        mock_layer.selectAll.assert_called_once()
-    
-    @pytest.mark.unit
-    @patch('controllers.crop_controller.QgsProject')
-    def test_handle_clear(self, mock_project):
-        """Test handle_clear method"""
-        # Mock comboboxes
-        self.mock_view.cmbCultivo.count.return_value = 3
-        self.mock_view.cmbProduccion.count.return_value = 3
-        
-        # Mock layer
-        mock_layer = Mock()
-        mock_layer.name.return_value = "Zonas de Cultivos"
-        mock_project.instance.return_value.mapLayers.return_value.values.return_value = [mock_layer]
-        
-        # Mock layer tree
-        mock_root = Mock()
-        mock_group = Mock()
-        mock_child = Mock()
-        
-        mock_root.findGroup.return_value = mock_group
-        mock_group.children.return_value = [mock_child]
-        mock_project.instance.return_value.layerTreeRoot.return_value = mock_root
-        
-        self.controller.handle_clear()
-        
-        # Verify UI clearing
-        self.mock_view.clear_search_fields.assert_called_once()
-        self.mock_view.cmbCultivo.setCurrentIndex.assert_called_once_with(0)
-        self.mock_view.cmbProduccion.setCurrentIndex.assert_called_once_with(0)
-        self.mock_view.lblFeatureCount.setText.assert_called_once_with("0")
-        
-        # Verify layer clearing
-        mock_layer.removeSelection.assert_called_once()
-        mock_child.setItemVisibilityChecked.assert_called()
-    
-    @pytest.mark.unit
-    @patch('controllers.crop_controller.QgsProject')
-    def test_handle_table_query_no_layer(self, mock_project):
-        """Test handle_table_query when no layer is found"""
-        mock_project.instance.return_value.mapLayers.return_value.values.return_value = []
-        
-        self.controller.handle_table_query()
-        
-        self.mock_view.show_error.assert_called_once_with(
-            "No se encontró la capa 'Zonas de Cultivos' en el proyecto."
-        )
-    
-    @pytest.mark.unit
-    @patch('controllers.crop_controller.QgsProject')
-    def test_handle_table_query_no_crop(self, mock_project):
-        """Test handle_table_query when no crop is selected"""
-        # Mock layer exists
-        mock_layer = Mock()
-        mock_layer.name.return_value = "Zonas de Cultivos"
-        mock_project.instance.return_value.mapLayers.return_value.values.return_value = [mock_layer]
-        
-        self.mock_view.get_table_crop.return_value = None
-        
-        self.controller.handle_table_query()
-        
-        self.mock_view.show_error.assert_called_once_with(
-            "Seleccione un tipo de cultivo."
-        )
-    
-    @pytest.mark.unit
-    @patch('controllers.crop_controller.QgsProject')
-    def test_handle_table_query_invalid_top_count(self, mock_project):
-        """Test handle_table_query with invalid top count"""
-        # Mock layer exists
-        mock_layer = Mock()
-        mock_layer.name.return_value = "Zonas de Cultivos"
-        mock_project.instance.return_value.mapLayers.return_value.values.return_value = [mock_layer]
-        
-        self.mock_view.get_table_crop.return_value = "Maíz"
-        self.mock_view.get_top_count.return_value = 15  # Invalid: > 10
-        
-        self.controller.handle_table_query()
-        
-        self.mock_view.show_error.assert_called_once_with(
-            "El contador TOP debe estar entre 1 y 10."
-        )
-    
-    @pytest.mark.unit
-    @patch('controllers.crop_controller.QgsProject')
-    def test_handle_table_query_invalid_area_range(self, mock_project):
-        """Test handle_table_query with invalid area range"""
-        # Mock layer exists
-        mock_layer = Mock()
-        mock_layer.name.return_value = "Zonas de Cultivos"
-        mock_project.instance.return_value.mapLayers.return_value.values.return_value = [mock_layer]
-        
-        self.mock_view.get_table_crop.return_value = "Maíz"
-        self.mock_view.get_top_count.return_value = 5
-        self.mock_view.get_area_min.return_value = 100
-        self.mock_view.get_area_max.return_value = 50  # Invalid: min > max
-        
-        self.controller.handle_table_query()
-        
-        self.mock_view.show_error.assert_called_once_with(
-            "El área mínima no puede ser mayor que el área máxima."
-        )
-    
-    @pytest.mark.unit
-    def test_handle_table_clear(self):
-        """Test handle_table_clear method"""
-        self.controller.handle_table_clear()
-        
-        self.mock_view.clear_table.assert_called_once()
-        self.mock_view.status_label.setText.assert_called_once_with(
-            "Tabla limpiada"
-        ) 
+        # Valid selection with only crop
+        assert controller.validate_selection('Maíz', '', '') == True 

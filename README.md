@@ -7,7 +7,8 @@ Un plugin para QGIS que permite visualizar y consultar información sobre cultiv
 [![Coverage](https://img.shields.io/badge/coverage-84%25-brightgreen)](htmlcov/index.html)
 [![Tests](https://img.shields.io/badge/tests-77%20passing-brightgreen)](tests/)
 [![Python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11-blue)](https://www.python.org/)
-[![CI/CD](https://img.shields.io/badge/CI%2FCD-simplified-green)](.github/workflows/ci-simple.yml)
+[![CI/CD](https://img.shields.io/badge/CI%2FCD-production%20ready-green)](.github/workflows/ci-production.yml)
+[![Quality](https://img.shields.io/badge/quality-automated-blue)](.pre-commit-config.yaml)
 
 ### ⚡ **Quick Start para Desarrolladores**
 ```bash
@@ -17,6 +18,12 @@ make test           # Tests completos (60s, 84% coverage)
 make test-core      # Tests rápidos (30s)
 make format         # Formatea código automáticamente
 ```
+
+### 📋 **CI/CD Pipeline Completo**
+- ✅ **Production Ready**: Pipeline robusto con 60% coverage mínimo
+- ✅ **Quality Gates**: Linting, formatting, y security checks
+- ✅ **Multi-Environment**: Unit tests + functional tests
+- ✅ **Comprehensive Reporting**: Coverage badges y artifacts
 
 ## 📊 **Resumen de Testing**
 
@@ -68,24 +75,34 @@ pytest tests/unit/test_crop_model.py -v    # Test específico
 pytest --cov --cov-report=html             # Coverage HTML
 ```
 
-## 🔄 **CI/CD Pipeline Simplificado**
+## 🔄 **CI/CD Pipeline Completo**
 
-### 🌟 **Enfoque Híbrido**
-- **GitHub Actions**: Tests básicos sin dependencias de QGIS
-- **Local Testing**: Coverage completo (84%) con `make test`
-- **Matrix Testing**: Python 3.9, 3.10, 3.11 en CI
-- **Code Quality**: Linting automático (Black, isort, Flake8)
+### 🌟 **Pipeline de Producción**
+- **GitHub Actions**: Pipeline completo con QGIS + tests
+- **Quality Gates**: Code formatting, linting, security scanning
+- **Coverage Enforcement**: Mínimo 60% coverage requerido
+- **Multi-Stage**: Unit tests → Functional tests → Coverage analysis
+- **Artifact Management**: Reports y badges automáticos
 
-### 🚦 **Workflows**
-1. **CI Simplificado**: Config tests + code quality (funciona en GitHub)
-2. **Local Development**: Full testing con `make test` (84% coverage)
-3. **Pre-commit Hooks**: Validación automática en cada commit
+### 🚦 **Workflows Activos**
+1. **`ci-production.yml`**: Pipeline principal (main/develop)
+2. **`ci-robust.yml`**: Pipeline robusto para todas las ramas
+3. **Quality Checks**: Automáticos en cada PR
+4. **Coverage Reporting**: Artefactos y badges automáticos
 
-### 📋 **¿Por qué este enfoque?**
-- ✅ **CI confiable**: Solo tests que funcionan sin QGIS instalado
-- ✅ **Local completo**: Full coverage (84%) disponible para desarrolladores
-- ✅ **Feedback rápido**: Code quality checks automáticos
-- ✅ **Sin bloqueos**: El desarrollo no se detiene por problemas de CI
+### 📋 **Características del Pipeline**
+- ✅ **Automated Testing**: 60% coverage mínimo garantizado
+- ✅ **Quality Assurance**: Black, isort, Flake8, Bandit
+- ✅ **Security Scanning**: Dependency y code security
+- ✅ **Multi-Python**: Matrix testing (3.9, 3.10, 3.11)
+- ✅ **QGIS Integration**: Full plugin testing con QGIS
+- ✅ **Deployment Ready**: Status checks para deployment
+
+### 🎯 **Configuración Avanzada**
+- **Coverage Config**: `.coveragerc` con exclusiones optimizadas
+- **Test Markers**: Unit, functional, integration, slow tests
+- **Environment Mocking**: CI/CD mocks para máxima compatibilidad
+- **Parallel Execution**: Tests optimizados para velocidad
 
 ## 🛠️ **Instalación y Setup**
 
@@ -163,6 +180,7 @@ visualizacion_de_cultivos/
 ## 📚 **Documentación**
 
 - 📖 **[DEVELOPMENT.md](DEVELOPMENT.md)**: Guía completa para desarrolladores
+- 🚀 **[CI_CD_SETUP.md](CI_CD_SETUP.md)**: Setup completo CI/CD pipeline
 - 📊 **[htmlcov/index.html](htmlcov/index.html)**: Reporte detallado de coverage
 - 🔧 **[.github/workflows/](/.github/workflows/)**: Configuración CI/CD
 

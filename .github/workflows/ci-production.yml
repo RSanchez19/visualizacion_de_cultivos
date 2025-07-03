@@ -1,0 +1,309 @@
+name: 🚀 Production CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.10"
+  COVERAGE_MINIMUM: 60
+  PYTHONPATH: /usr/lib/python3/dist-packages:/usr/share/qgis/python
+
+jobs:
+  # =============================================================================
+  # CODE QUALITY & SECURITY
+  # =============================================================================
+  quality:
+    name: 🔍 Code Quality & Security
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-quality-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-quality-
+
+      - name: 🔧 Install Quality Tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install black isort flake8 bandit safety mypy
+
+      - name: 🎨 Code Formatting Check
+        run: |
+          black --check --diff . --extend-exclude "/(build|dist|\.git|\.pytest_cache|htmlcov|resources_rc\.py|ui_.*\.py)/"
+
+      - name: 📋 Import Sorting Check
+        run: |
+          isort --check-only --diff . --skip-glob="*/build/*" --skip-glob="*/dist/*"
+
+      - name: 🔍 Linting (Flake8)
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=build,dist
+          flake8 . --count --exit-zero --max-complexity=12 --max-line-length=120 --statistics --exclude=build,dist
+
+      - name: 🔒 Security Scan
+        run: |
+          bandit -r . --exclude ./tests,./build,./dist -ll
+          safety check
+
+  # =============================================================================
+  # UNIT TESTS
+  # =============================================================================
+  unit-tests:
+    name: 🧪 Unit Tests
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 🖥️ Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            xvfb \
+            libqt5gui5 \
+            libqt5core5a \
+            libqt5widgets5 \
+            libgdal-dev \
+            gdal-bin \
+            python3-gdal \
+            qgis \
+            python3-qgis
+
+      - name: 📦 Cache Python Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-python-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-python-
+
+      - name: 🔧 Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov pytest-mock pytest-timeout coverage mock python-dotenv
+          pip install pytest-xvfb pytest-qt
+
+      - name: 🧪 Run Unit Tests
+        run: |
+          xvfb-run -a python -m pytest tests/unit/ \
+            --verbose \
+            --cov=. \
+            --cov-config=.coveragerc \
+            --cov-branch \
+            --cov-report=xml:coverage-unit.xml \
+            --cov-report=html:htmlcov-unit \
+            --cov-report=term-missing:skip-covered \
+            --cov-fail-under=${{ env.COVERAGE_MINIMUM }} \
+            --timeout=300 \
+            -m "unit"
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QGIS_PREFIX_PATH: /usr
+          ENVIRONMENT: test
+
+      - name: 📊 Coverage Report
+        run: |
+          coverage report --show-missing
+          echo "## 📊 Unit Test Coverage" >> $GITHUB_STEP_SUMMARY
+          coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
+
+      - name: 📤 Upload Unit Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results
+          path: |
+            coverage-unit.xml
+            htmlcov-unit/
+          retention-days: 30
+
+  # =============================================================================
+  # FUNCTIONAL TESTS
+  # =============================================================================
+  functional-tests:
+    name: 🔧 Functional Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 🖥️ Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            xvfb \
+            libqt5gui5 \
+            libqt5core5a \
+            libqt5widgets5 \
+            libgdal-dev \
+            gdal-bin \
+            python3-gdal \
+            qgis \
+            python3-qgis
+
+      - name: 📦 Cache Python Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-python-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-python-
+
+      - name: 🔧 Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov pytest-mock pytest-timeout coverage mock python-dotenv
+          pip install pytest-xvfb pytest-qt
+
+      - name: 🔧 Run Functional Tests
+        run: |
+          xvfb-run -a python -m pytest tests/functional/ \
+            --verbose \
+            --cov=. \
+            --cov-config=.coveragerc \
+            --cov-append \
+            --cov-report=xml:coverage-functional.xml \
+            --cov-report=html:htmlcov-functional \
+            --cov-report=term-missing:skip-covered \
+            --timeout=600 \
+            -m "functional"
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QGIS_PREFIX_PATH: /usr
+          ENVIRONMENT: test
+
+      - name: 📤 Upload Functional Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: functional-test-results
+          path: |
+            coverage-functional.xml
+            htmlcov-functional/
+          retention-days: 30
+
+  # =============================================================================
+  # COMPREHENSIVE COVERAGE REPORT
+  # =============================================================================
+  coverage-report:
+    name: 📊 Coverage Analysis
+    runs-on: ubuntu-latest
+    needs: [unit-tests, functional-tests]
+    if: always()
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Download Test Results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*-test-results"
+          path: test-results/
+          merge-multiple: true
+
+      - name: 🔧 Install Coverage Tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install coverage coverage-badge
+
+      - name: 📊 Generate Combined Coverage Report
+        run: |
+          # Combine coverage data if available
+          if [ -f test-results/coverage-unit.xml ]; then
+            cp test-results/coverage-unit.xml .
+          fi
+          if [ -f test-results/coverage-functional.xml ]; then
+            cp test-results/coverage-functional.xml coverage-combined.xml
+          fi
+          
+          # Generate coverage badge
+          if [ -f coverage-unit.xml ]; then
+            coverage-badge -f coverage-unit.xml -o coverage-badge.svg
+          fi
+
+      - name: 📊 Coverage Summary
+        run: |
+          echo "## 📊 Final Coverage Report" >> $GITHUB_STEP_SUMMARY
+          if [ -f coverage-unit.xml ]; then
+            python -c "
+            import xml.etree.ElementTree as ET
+            tree = ET.parse('coverage-unit.xml')
+            coverage = float(tree.getroot().attrib['line-rate']) * 100
+            print(f'**Unit Test Coverage: {coverage:.2f}%**')
+            if coverage >= ${{ env.COVERAGE_MINIMUM }}:
+                print('✅ Coverage target achieved!')
+            else:
+                print('❌ Coverage below minimum threshold')
+            " >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 📤 Upload Coverage Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-reports
+          path: |
+            coverage-unit.xml
+            coverage-functional.xml
+            coverage-badge.svg
+            htmlcov-*/
+          retention-days: 90
+
+  # =============================================================================
+  # DEPLOYMENT READINESS CHECK
+  # =============================================================================
+  deployment-check:
+    name: 🚀 Deployment Readiness
+    runs-on: ubuntu-latest
+    needs: [quality, unit-tests, functional-tests, coverage-report]
+    if: always()
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: ✅ Deployment Status
+        run: |
+          echo "## 🚀 Deployment Readiness Check" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Quality | ${{ needs.quality.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Unit Tests | ${{ needs.unit-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Functional Tests | ${{ needs.functional-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Coverage Report | ${{ needs.coverage-report.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.quality.result }}" == "success" && "${{ needs.unit-tests.result }}" == "success" ]]; then
+            echo "🎉 **All checks passed! Ready for deployment.**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Some checks failed. Please review before deployment.**" >> $GITHUB_STEP_SUMMARY
+          fi 

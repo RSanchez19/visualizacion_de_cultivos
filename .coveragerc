@@ -5,31 +5,18 @@ omit =
     */test_*
     */venv/*
     */htmlcov/*
-    */build/*
-    */dist/*
-    */__pycache__/*
-    */.*
+    setup.py
     run_tests.py
     verify_tests.py
-    consulta_dialog.py
     views/crop_view.py
-    ui_*.py
+    consulta_dialog.py
+    ui_consulta_dialog.py
+    compile_resources.py
 
 [report]
 exclude_lines =
     pragma: no cover
     def __repr__
-    if self.debug:
-    if settings.DEBUG
     raise AssertionError
     raise NotImplementedError
-    if 0:
     if __name__ == .__main__.:
-    class .*\bProtocol\):
-    @(abc\.)?abstractmethod
-
-[html]
-directory = htmlcov
-
-[xml]
-output = coverage.xml 
