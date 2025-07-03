@@ -547,3 +547,4 @@ python verify_tests.py
 **Versión**: 2.0.0  
 **Última actualización**: Enero 2025  
 **Licencia**: [Especificar licencia] 
+=======
