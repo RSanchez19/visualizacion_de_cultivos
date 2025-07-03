@@ -1,0 +1,381 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QGIS TECNICO</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><h1 id="manual-técnico---visualización-inteligente-de-zonas-de-cultivo-y-producción-en-la-zona-occidental-de-el-salvador-con-qgis">Manual Técnico - Visualización Inteligente de Zonas de Cultivo y Producción en la Zona Occidental de El Salvador con QGIS</h1>
+<h2 id="índice">Índice</h2>
+<ol>
+<li>
+<p>Documentación de QGIS: Instalación y uso básico</p>
+</li>
+<li>
+<p>Descripción General</p>
+</li>
+<li>
+<p>Arquitectura del Sistema</p>
+<ul>
+<li>
+<p>3.1 Modelo (models/)</p>
+</li>
+<li>
+<p>3.2 Vista (views/)</p>
+</li>
+<li>
+<p>3.3 Controlador (controllers/)</p>
+</li>
+<li>
+<p>3.4 Flujo de Datos</p>
+</li>
+<li>
+<p>3.5 Diagrama de flujo del uso del plugin</p>
+</li>
+<li>
+<p>3.6 Diagrama de Arquitectura del Sistema (MVC)</p>
+</li>
+<li>
+<p>3.7 Diagrama de interacción del usuario con el plugin</p>
+</li>
+<li>
+<p>3.8 Mapa conceptual del entorno técnico (QGIS + Plugin)</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Archivos Clave</p>
+</li>
+<li>
+<p>Requisitos</p>
+</li>
+<li>
+<p>Instalación del Plugin</p>
+</li>
+<li>
+<p>Uso del Plugin</p>
+</li>
+<li>
+<p>Pruebas</p>
+</li>
+<li>
+<p>Dependencias</p>
+</li>
+</ol>
+<hr>
+<h2 id="documentación-de-qgis-instalación-y-uso-básico">1. Documentación de QGIS: Instalación y uso básico</h2>
+<h3 id="¿qué-es-qgis">¿Qué es QGIS?</h3>
+<p>QGIS (Quantum Geographic Information System) es un sistema de información geográfica (SIG) gratuito y de código abierto que permite la visualización, edición, análisis y publicación de información geoespacial. Es compatible con múltiples formatos de datos (raster y vectoriales) y se puede extender mediante complementos (plugins), lo que lo hace una alternativa potente y flexible frente a soluciones propietarias.</p>
+<p>Está disponible para sistemas operativos Windows, Linux y macOS, y es ampliamente usado en los sectores académico, gubernamental y privado.</p>
+<hr>
+<h3 id="¿dónde-obtener-qgis">¿Dónde obtener QGIS?</h3>
+<p>QGIS puede descargarse desde su sitio oficial:</p>
+<p>🔗 <a href="https://qgis.org/es/site/forusers/download.html">https://qgis.org/es/site/forusers/download.html</a></p>
+<p>Allí encontrarás versiones para los principales sistemas operativos. Se recomienda descargar la versión LTR (Long Term Release), ya que garantiza mayor estabilidad para entornos de producción</p>
+<hr>
+<h3 id="requisitos-mínimos-recomendados">Requisitos mínimos recomendados</h3>
+<ul>
+<li>
+<p><strong>Sistema operativo:</strong> Windows 10+, macOS 11+, o una distribución Linux actualizada.</p>
+</li>
+<li>
+<p><strong>Procesador:</strong> Intel Core i5 o superior.</p>
+</li>
+<li>
+<p><strong>Memoria RAM:</strong> mínimo 4 GB (recomendado 8 GB o más para manejo de capas grandes).</p>
+</li>
+<li>
+<p><strong>Almacenamiento:</strong> 2 GB de espacio libre para la instalación.</p>
+</li>
+<li>
+<p><strong>Resolución de pantalla:</strong> 1280x768 o superior.</p>
+</li>
+</ul>
+<hr>
+<h3 id="instalación">Instalación</h3>
+<h4 id="en-windows">En Windows</h4>
+<ol>
+<li>
+<p>Ve a la página de descarga y selecciona el instalador correspondiente (standalone installer).</p>
+</li>
+<li>
+<p>Ejecuta el instalador y sigue las instrucciones. Elige instalar la versión LTR si es tu primera vez.</p>
+</li>
+<li>
+<p>Se instalarán QGIS, GRASS GIS y otros componentes útiles por defecto.</p>
+</li>
+</ol>
+<h4 id="en-linux-ubuntudebian">En Linux (Ubuntu/Debian)</h4>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">sudo</span>  apt  update
+<span class="token function">sudo</span>  apt  <span class="token function">install</span>  qgis  qgis-plugin-grass
+</code></pre>
+<p>También puedes añadir el repositorio oficial de QGIS para versiones más recientes.</p>
+<h4 id="en-macos">En macOS</h4>
+<ol>
+<li>
+<p>Descarga el archivo .dmg desde la web oficial.</p>
+</li>
+<li>
+<p>Instala primero los paquetes de dependencias (como GDAL y Python si se requiere).</p>
+</li>
+<li>
+<p>Arrastra QGIS a tu carpeta de Aplicaciones.</p>
+</li>
+</ol>
+<h3 id="primeros-pasos-con-qgis">Primeros pasos con QGIS</h3>
+<p>Al iniciar QGIS verás una interfaz dividida en varias áreas clave:</p>
+<ul>
+<li>
+<p><strong>Barra de herramientas:</strong> permite acceder a funciones comunes (agregar capas, hacer zoom, medir distancias, etc.).</p>
+</li>
+<li>
+<p><strong>Panel de capas:</strong> muestra la lista de capas cargadas y su orden de visualización.</p>
+</li>
+<li>
+<p><strong>Lienzo del mapa:</strong> área principal donde se renderizan las capas.</p>
+</li>
+<li>
+<p><strong>Panel de navegador:</strong> facilita el acceso rápido a archivos y bases de datos geográficas.</p>
+</li>
+<li>
+<p><strong>Consola de Python:</strong> permite ejecutar comandos directamente usando PyQGIS.</p>
+</li>
+</ul>
+<h3 id="tipos-de-datos-que-puedes-usar">Tipos de datos que puedes usar</h3>
+<p>QGIS trabaja con dos tipos principales de datos:</p>
+<ol>
+<li><strong>Vectoriales:</strong> puntos, líneas o polígonos. Formatos comunes:</li>
+</ol>
+<ul>
+<li>
+<p><code>.shp</code> (Shapefile)</p>
+</li>
+<li>
+<p><code>.geojson</code></p>
+</li>
+<li>
+<p><code>.gpkg</code> (GeoPackage)</p>
+</li>
+<li>
+<p><code>.kml</code>, <code>.csv</code> con coordenadas</p>
+</li>
+</ul>
+<ol start="2">
+<li><strong>Raster:</strong> imágenes compuestas por píxeles. Ejemplos:</li>
+</ol>
+<ul>
+<li>
+<p>Imágenes satelitales</p>
+</li>
+<li>
+<p>Modelos digitales de elevación</p>
+</li>
+<li>
+<p><code>.tif</code>, <code>.jpg</code>, <code>.png</code> georreferenciados</p>
+</li>
+</ul>
+<p>También se puede conectar a bases de datos espaciales como PostGIS, Spatialite, y servicios en línea como WMS, WMTS y WFS.</p>
+<h3 id="uso-de-complementos-plugins">Uso de complementos (plugins)</h3>
+<p>QGIS tiene una gran comunidad que ha desarrollado numerosos plugins. Para acceder a ellos:</p>
+<ul>
+<li>
+<p>Ir a <strong>Complementos &gt; Administrar e instalar complementos</strong>.</p>
+</li>
+<li>
+<p>Buscar por nombre (ej. “QuickMapServices”, “OpenLayers Plugin”, “qgis2web”).</p>
+</li>
+<li>
+<p>Instalar y activar el plugin.</p>
+</li>
+</ul>
+<blockquote>
+<p><strong>Nota:</strong> El plugin descrito en este manual es uno de estos complementos personalizados que puedes cargar manualmente.</p>
+</blockquote>
+<hr>
+<h3 id="recursos-de-ayuda-y-formación">Recursos de ayuda y formación</h3>
+<ul>
+<li>
+<p>Manuales oficiales: <a href="https://docs.qgis.org">https://docs.qgis.org</a></p>
+</li>
+<li>
+<p>Foros y comunidad:</p>
+<ul>
+<li>
+<p>StackExchange: <a href="https://gis.stackexchange.com">https://gis.stackexchange.com</a></p>
+</li>
+<li>
+<p>Reddit: <a href="https://reddit.com/r/QGIS">https://reddit.com/r/QGIS</a></p>
+</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="descripción-general">2. Descripción General</h2>
+<p>Este plugin para QGIS está diseñado para integrarse dentro de la interfaz del programa. Permite visualizar y analizar zonas de cultivo en el occidente de El Salvador. Facilita la consulta y el filtrado de zonas según tipo de cultivo y nivel de producción, resaltando automáticamente las áreas que cumplen los criterios seleccionados.</p>
+<hr>
+<h2 id="arquitectura-del-sistema">3. Arquitectura del Sistema</h2>
+<p>El plugin sigue el patrón Modelo-Vista-Controlador (MVC), integrándose directamente con la estructura de QGIS y PyQt5.</p>
+<h3 id="modelo-models">3.1 Modelo (<code>models/</code>)</h3>
+<ul>
+<li><code>crop_model.py</code>: Gestiona la lógica de acceso y consulta de datos de cultivos. Proporciona métodos para obtener los cultivos disponibles y otros datos requeridos por la vista y el controlador.</li>
+</ul>
+<h3 id="vista-views">3.2 Vista (<code>views/</code>)</h3>
+<ul>
+<li>
+<p><code>crop_view.py</code>: Define la interfaz gráfica del usuario (GUI) usando PyQt5 y se muestra como un panel dentro de QGIS. Incluye:</p>
+</li>
+<li>
+<p>ComboBox para zona y tipo de cultivo</p>
+</li>
+<li>
+<p>Radio buttons para seleccionar un solo departamento</p>
+</li>
+<li>
+<p>ComboBox para nivel de producción (Alto, Medio, Bajo)</p>
+</li>
+<li>
+<p>Botones de consulta y limpieza</p>
+</li>
+<li>
+<p>Etiquetas para mostrar resultados y mensajes de estado</p>
+</li>
+</ul>
+<h3 id="controlador-controllers">3.3 Controlador (<code>controllers/</code>)</h3>
+<ul>
+<li><code>crop_controller.py</code>: Orquesta la interacción entre la vista y el modelo. Gestiona los eventos de la interfaz, ejecuta las consultas sobre los datos y actualiza la vista con los resultados.</li>
+</ul>
+<h3 id="flujo-de-datos">3.4 Flujo de Datos</h3>
+<ol>
+<li>
+<p>El usuario selecciona zona, departamento, tipo de cultivo y nivel de producción en la interfaz del plugin</p>
+</li>
+<li>
+<p>Al presionar “Consultar”, el controlador toma los parámetros y realiza la consulta al modelo</p>
+</li>
+<li>
+<p>Las zonas de cultivo que cumplen los criterios se resaltan en el mapa</p>
+</li>
+<li>
+<p>Se muestran los resultados en la interfaz</p>
+</li>
+<li>
+<p>El botón “Limpiar” restablece la búsqueda y visualización</p>
+</li>
+</ol>
+<h3 id="diagrama-de-flujo-del-uso-del-plugin">3.5 Diagrama de flujo del uso del plugin</h3>
+<pre class=" language-mermaid"><svg id="mermaid-svg-Ditlt3wbPUi65VZu" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="715.4791259765625" style="max-width: 259.41668701171875px;" viewBox="0 0 259.41668701171875 715.4791259765625"><style>#mermaid-svg-Ditlt3wbPUi65VZu{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#000000;}#mermaid-svg-Ditlt3wbPUi65VZu .error-icon{fill:#552222;}#mermaid-svg-Ditlt3wbPUi65VZu .error-text{fill:#552222;stroke:#552222;}#mermaid-svg-Ditlt3wbPUi65VZu .edge-thickness-normal{stroke-width:2px;}#mermaid-svg-Ditlt3wbPUi65VZu .edge-thickness-thick{stroke-width:3.5px;}#mermaid-svg-Ditlt3wbPUi65VZu .edge-pattern-solid{stroke-dasharray:0;}#mermaid-svg-Ditlt3wbPUi65VZu .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-svg-Ditlt3wbPUi65VZu .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-svg-Ditlt3wbPUi65VZu .marker{fill:#666;stroke:#666;}#mermaid-svg-Ditlt3wbPUi65VZu .marker.cross{stroke:#666;}#mermaid-svg-Ditlt3wbPUi65VZu svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#mermaid-svg-Ditlt3wbPUi65VZu .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#000000;}#mermaid-svg-Ditlt3wbPUi65VZu .cluster-label text{fill:#333;}#mermaid-svg-Ditlt3wbPUi65VZu .cluster-label span{color:#333;}#mermaid-svg-Ditlt3wbPUi65VZu .label text,#mermaid-svg-Ditlt3wbPUi65VZu span{fill:#000000;color:#000000;}#mermaid-svg-Ditlt3wbPUi65VZu .node rect,#mermaid-svg-Ditlt3wbPUi65VZu .node circle,#mermaid-svg-Ditlt3wbPUi65VZu .node ellipse,#mermaid-svg-Ditlt3wbPUi65VZu .node polygon,#mermaid-svg-Ditlt3wbPUi65VZu .node path{fill:#eee;stroke:#999;stroke-width:1px;}#mermaid-svg-Ditlt3wbPUi65VZu .node .label{text-align:center;}#mermaid-svg-Ditlt3wbPUi65VZu .node.clickable{cursor:pointer;}#mermaid-svg-Ditlt3wbPUi65VZu .arrowheadPath{fill:#333333;}#mermaid-svg-Ditlt3wbPUi65VZu .edgePath .path{stroke:#666;stroke-width:1.5px;}#mermaid-svg-Ditlt3wbPUi65VZu .flowchart-link{stroke:#666;fill:none;}#mermaid-svg-Ditlt3wbPUi65VZu .edgeLabel{background-color:white;text-align:center;}#mermaid-svg-Ditlt3wbPUi65VZu .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#mermaid-svg-Ditlt3wbPUi65VZu .cluster rect{fill:hsl(210,66.6666666667%,95%);stroke:#26a;stroke-width:1px;}#mermaid-svg-Ditlt3wbPUi65VZu .cluster text{fill:#333;}#mermaid-svg-Ditlt3wbPUi65VZu .cluster span{color:#333;}#mermaid-svg-Ditlt3wbPUi65VZu div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(-160,0%,93.3333333333%);border:1px solid #26a;border-radius:2px;pointer-events:none;z-index:100;}#mermaid-svg-Ditlt3wbPUi65VZu:root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#mermaid-svg-Ditlt3wbPUi65VZu flowchart-v2{fill:apa;}</style><g transform="translate(0, -0.0000019073486328125)"><marker id="flowchart-pointEnd" class="marker flowchart" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="flowchart-pointStart" class="marker flowchart" viewBox="0 0 10 10" refX="0" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="flowchart-circleEnd" class="marker flowchart" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="flowchart-circleStart" class="marker flowchart" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="flowchart-crossEnd" class="marker cross flowchart" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="flowchart-crossStart" class="marker cross flowchart" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M129.70833587646484,49.70833206176758L129.70833587646484,53.87499872843424C129.70833587646484,58.041665395100914,129.70833587646484,66.37499872843425,129.70833587646484,74.70833206176758C129.70833587646484,83.0416653951009,129.70833587646484,91.37499872843425,129.70833587646484,95.5416653951009L129.70833587646484,99.70833206176758" id="L-A-B" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-A LE-B" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M129.70833587646484,141.41666412353516L129.70833587646484,145.5833307902018C129.70833587646484,149.7499974568685,129.70833587646484,158.0833307902018,129.70833587646484,166.41666412353516C129.70833587646484,174.7499974568685,129.70833587646484,183.0833307902018,129.70833587646484,187.2499974568685L129.70833587646484,191.41666412353516" id="L-B-C" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-B LE-C" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M110.93863863017172,233.12499618530273L107.18844925584074,237.2916628519694C103.43825988150975,241.45832951863608,95.93788113284778,249.7916628519694,92.18769175851678,258.12499618530273C88.43750238418579,266.45832951863605,88.43750238418579,274.7916628519694,88.43750238418579,278.95832951863605L88.43750238418579,283.12499618530273" id="L-C-D" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-C LE-D" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M88.43750238418579,324.8333282470703L88.43750238418579,328.999994913737C88.43750238418579,333.1666615804036,88.43750238418579,341.499994913737,92.09519162952309,353.2207777581671C95.75288087486037,364.9415606025973,103.06825936553496,380.0497929581243,106.72594861087225,387.6039091358878L110.38363785620953,395.15802531365136" id="L-D-E" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-D LE-E" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M150.03303327947654,395.15802660375624L153.5240559610211,387.6039102109753C157.01507864256567,380.0497938181943,163.99712400565477,364.9415610326323,167.48814668719933,349.74508363470403C170.9791693687439,334.5486062367757,170.9791693687439,319.26388422648114,170.9791693687439,303.9791622161865C170.9791693687439,288.6944402058919,170.9791693687439,273.40971819559735,167.22897999441292,261.6006905237834C163.47879062008192,249.7916628519694,155.97841187141992,241.45832951863608,152.22822249708895,237.2916628519694L148.47803312275795,233.12499618530273" id="L-E-C" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-E LE-C" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M130.20833587646476,497.8541612625123L130.12500254313144,504.1631895701091C130.04166920979813,510.472217877706,129.87500254313147,523.0902744928995,129.79166920979816,535.7916639645895C129.70833587646484,548.4930534362793,129.70833587646484,561.2777757644653,129.70833587646484,567.6701369285583L129.70833587646484,574.0624980926514" id="L-E-F" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-E LE-F" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M129.70833587646484,615.770830154419L129.70833587646484,619.9374968210856C129.70833587646484,624.1041634877523,129.70833587646484,632.4374968210856,129.70833587646484,640.770830154419C129.70833587646484,649.1041634877523,129.70833587646484,657.4374968210856,129.70833587646484,661.6041634877523L129.70833587646484,665.770830154419" id="L-F-G" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-F LE-G" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(170.9791693687439, 303.9791622161865)"><g class="label" transform="translate(-6.1354169845581055, -13.354166984558105)"><foreignObject width="12.270833969116211" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel">Sí</span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(129.70833587646484, 535.7083311080933)"><g class="label" transform="translate(-9.40625, -13.354166984558105)"><foreignObject width="18.8125" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel">No</span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default default" id="flowchart-A-281" transform="translate(129.70833587646484, 28.85416603088379)"><rect style="" rx="20.854166984558105" ry="20.854166984558105" x="-32.13020968437195" y="-20.854166984558105" width="64.2604193687439" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-19.416667938232422, -13.354166984558105)"><foreignObject width="38.833335876464844" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Inicio</span></div></foreignObject></g></g><g class="node default default" id="flowchart-B-282" transform="translate(129.70833587646484, 120.56249809265137)"><rect class="basic label-container" style="" rx="0" ry="0" x="-121.70833587646484" y="-20.854166984558105" width="243.4166717529297" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-114.20833587646484, -13.354166984558105)"><foreignObject width="228.4166717529297" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Cargar capa de zonas de cultivo</span></div></foreignObject></g></g><g class="node default default" id="flowchart-C-283" transform="translate(129.70833587646484, 212.27083015441895)"><rect class="basic label-container" style="" rx="0" ry="0" x="-72.4375" y="-20.854166984558105" width="144.875" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-64.9375, -13.354166984558105)"><foreignObject width="129.875" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Seleccionar filtros</span></div></foreignObject></g></g><g class="node default default" id="flowchart-D-284" transform="translate(88.43750238418579, 303.9791622161865)"><rect class="basic label-container" style="" rx="0" ry="0" x="-41.40625" y="-20.854166984558105" width="82.8125" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-33.90625, -13.354166984558105)"><foreignObject width="67.8125" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Consultar</span></div></foreignObject></g></g><g class="node default default" id="flowchart-E-285" transform="translate(129.70833587646484, 436.09374618530273)"><polygon points="61.260416984558105,0 122.52083396911621,-61.260416984558105 61.260416984558105,-122.52083396911621 0,-61.260416984558105" class="label-container" transform="translate(-61.260416984558105,61.260416984558105)" style=""></polygon><g class="label" style="" transform="translate(-32.90625, -13.354166984558105)"><foreignObject width="65.8125" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">¿Limpiar?</span></div></foreignObject></g></g><g class="node default default" id="flowchart-F-286" transform="translate(129.70833587646484, 594.9166641235352)"><rect class="basic label-container" style="" rx="0" ry="0" x="-106.32292175292969" y="-20.854166984558105" width="212.64584350585938" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-98.82292175292969, -13.354166984558105)"><foreignObject width="197.64584350585938" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Resaltar zonas coincidentes</span></div></foreignObject></g></g><g class="node default default" id="flowchart-G-287" transform="translate(129.70833587646484, 686.6249961853027)"><rect style="" rx="20.854166984558105" ry="20.854166984558105" x="-23.567708730697632" y="-20.854166984558105" width="47.135417461395264" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-10.854166984558105, -13.354166984558105)"><foreignObject width="21.70833396911621" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Fin</span></div></foreignObject></g></g></g></g></g></svg></pre>
+<h3 id="diagrama-de-arquitectura-del-sistema-mvc">3.6 Diagrama de Arquitectura del Sistema (MVC)</h3>
+<pre class=" language-mermaid"><svg id="mermaid-svg-SL07uHvtCeefGr1U" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="424.54168701171875" style="max-width: 314.5833435058594px;" viewBox="0 0 314.5833435058594 424.54168701171875"><style>#mermaid-svg-SL07uHvtCeefGr1U{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#000000;}#mermaid-svg-SL07uHvtCeefGr1U .error-icon{fill:#552222;}#mermaid-svg-SL07uHvtCeefGr1U .error-text{fill:#552222;stroke:#552222;}#mermaid-svg-SL07uHvtCeefGr1U .edge-thickness-normal{stroke-width:2px;}#mermaid-svg-SL07uHvtCeefGr1U .edge-thickness-thick{stroke-width:3.5px;}#mermaid-svg-SL07uHvtCeefGr1U .edge-pattern-solid{stroke-dasharray:0;}#mermaid-svg-SL07uHvtCeefGr1U .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-svg-SL07uHvtCeefGr1U .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-svg-SL07uHvtCeefGr1U .marker{fill:#666;stroke:#666;}#mermaid-svg-SL07uHvtCeefGr1U .marker.cross{stroke:#666;}#mermaid-svg-SL07uHvtCeefGr1U svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#mermaid-svg-SL07uHvtCeefGr1U .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#000000;}#mermaid-svg-SL07uHvtCeefGr1U .cluster-label text{fill:#333;}#mermaid-svg-SL07uHvtCeefGr1U .cluster-label span{color:#333;}#mermaid-svg-SL07uHvtCeefGr1U .label text,#mermaid-svg-SL07uHvtCeefGr1U span{fill:#000000;color:#000000;}#mermaid-svg-SL07uHvtCeefGr1U .node rect,#mermaid-svg-SL07uHvtCeefGr1U .node circle,#mermaid-svg-SL07uHvtCeefGr1U .node ellipse,#mermaid-svg-SL07uHvtCeefGr1U .node polygon,#mermaid-svg-SL07uHvtCeefGr1U .node path{fill:#eee;stroke:#999;stroke-width:1px;}#mermaid-svg-SL07uHvtCeefGr1U .node .label{text-align:center;}#mermaid-svg-SL07uHvtCeefGr1U .node.clickable{cursor:pointer;}#mermaid-svg-SL07uHvtCeefGr1U .arrowheadPath{fill:#333333;}#mermaid-svg-SL07uHvtCeefGr1U .edgePath .path{stroke:#666;stroke-width:1.5px;}#mermaid-svg-SL07uHvtCeefGr1U .flowchart-link{stroke:#666;fill:none;}#mermaid-svg-SL07uHvtCeefGr1U .edgeLabel{background-color:white;text-align:center;}#mermaid-svg-SL07uHvtCeefGr1U .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#mermaid-svg-SL07uHvtCeefGr1U .cluster rect{fill:hsl(210,66.6666666667%,95%);stroke:#26a;stroke-width:1px;}#mermaid-svg-SL07uHvtCeefGr1U .cluster text{fill:#333;}#mermaid-svg-SL07uHvtCeefGr1U .cluster span{color:#333;}#mermaid-svg-SL07uHvtCeefGr1U div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(-160,0%,93.3333333333%);border:1px solid #26a;border-radius:2px;pointer-events:none;z-index:100;}#mermaid-svg-SL07uHvtCeefGr1U:root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#mermaid-svg-SL07uHvtCeefGr1U flowchart-v2{fill:apa;}</style><g transform="translate(0, -0.0000019073486328125)"><marker id="flowchart-pointEnd" class="marker flowchart" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="flowchart-pointStart" class="marker flowchart" viewBox="0 0 10 10" refX="0" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="flowchart-circleEnd" class="marker flowchart" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="flowchart-circleStart" class="marker flowchart" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="flowchart-crossEnd" class="marker cross flowchart" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="flowchart-crossStart" class="marker cross flowchart" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M152.743739070687,49.70833206176758L151.83506118439414,53.87499872843424C150.92638329810123,58.041665395100914,149.10902752551547,66.37499872843425,149.10902752551547,74.70833206176758C149.10902752551547,83.0416653951009,150.92638329810123,91.37499872843425,151.83506118439414,95.5416653951009L152.743739070687,99.70833206176758" id="L-A-B" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-A LE-B" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M152.743739070687,141.41666412353516L151.83506118439414,145.5833307902018C150.92638329810123,149.7499974568685,149.10902752551547,158.0833307902018,149.10902752551547,166.41666412353516C149.10902752551547,174.7499974568685,150.92638329810123,183.0833307902018,151.83506118439414,187.2499974568685L152.743739070687,191.41666412353516" id="L-B-C" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-B LE-C" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M157.2916717529297,233.12499618530273L157.2916717529297,237.2916628519694C157.2916717529297,241.45832951863608,157.2916717529297,249.7916628519694,157.2916717529297,258.12499618530273C157.2916717529297,266.45832951863605,157.2916717529297,274.7916628519694,157.2916717529297,278.95832951863605L157.2916717529297,283.12499618530273" id="L-C-D" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-C LE-D" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M157.2916717529297,324.8333282470703L157.2916717529297,328.999994913737C157.2916717529297,333.1666615804036,157.2916717529297,341.499994913737,157.2916717529297,349.8333282470703C157.2916717529297,358.1666615804036,157.2916717529297,366.499994913737,157.2916717529297,370.6666615804036L157.2916717529297,374.8333282470703" id="L-D-E" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-D LE-E" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M161.83960443517236,191.41666412353516L162.74828232146524,187.2499974568685C163.65696020775815,183.0833307902018,165.4743159803439,174.7499974568685,165.4743159803439,166.41666412353516C165.4743159803439,158.0833307902018,163.65696020775815,149.7499974568685,162.74828232146524,145.5833307902018L161.83960443517236,141.41666412353516" id="L-C-B" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-C LE-B" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M161.83960443517236,99.70833206176758L162.74828232146524,95.5416653951009C163.65696020775815,91.37499872843425,165.4743159803439,83.0416653951009,165.4743159803439,74.70833206176758C165.4743159803439,66.37499872843425,163.65696020775815,58.041665395100914,162.74828232146524,53.87499872843424L161.83960443517236,49.70833206176758" id="L-B-A" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-B LE-A" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default default" id="flowchart-A-311" transform="translate(157.2916717529297, 28.85416603088379)"><rect class="basic label-container" style="" rx="0" ry="0" x="-34.1875" y="-20.854166984558105" width="68.375" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-26.6875, -13.354166984558105)"><foreignObject width="53.375" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Usuario</span></div></foreignObject></g></g><g class="node default default" id="flowchart-B-313" transform="translate(157.2916717529297, 120.56249809265137)"><rect class="basic label-container" style="" rx="0" ry="0" x="-74.38542175292969" y="-20.854166984558105" width="148.77084350585938" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-66.88542175292969, -13.354166984558105)"><foreignObject width="133.77084350585938" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Vista crop_view.py</span></div></foreignObject></g></g><g class="node default default" id="flowchart-C-315" transform="translate(157.2916717529297, 212.27083015441895)"><rect class="basic label-container" style="" rx="0" ry="0" x="-118.04167175292969" y="-20.854166984558105" width="236.08334350585938" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-110.54167175292969, -13.354166984558105)"><foreignObject width="221.08334350585938" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Controlador crop_controller.py</span></div></foreignObject></g></g><g class="node default default" id="flowchart-D-317" transform="translate(157.2916717529297, 303.9791622161865)"><rect class="basic label-container" style="" rx="0" ry="0" x="-88.82292175292969" y="-20.854166984558105" width="177.64584350585938" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-81.32292175292969, -13.354166984558105)"><foreignObject width="162.64584350585938" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Modelo crop_model.py</span></div></foreignObject></g></g><g class="node default default" id="flowchart-E-319" transform="translate(157.2916717529297, 395.6874942779541)"><rect class="basic label-container" style="" rx="0" ry="0" x="-149.2916717529297" y="-20.854166984558105" width="298.5833435058594" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-141.7916717529297, -13.354166984558105)"><foreignObject width="283.5833435058594" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Base de Datos o Capas .gpkg, .shp, etc.</span></div></foreignObject></g></g></g></g></g></svg></pre>
+<h3 id="diagrama-de-interacción-del-usuario-con-el-plugin">3.7 Diagrama de interacción del usuario con el plugin</h3>
+<pre class=" language-mermaid"><svg id="mermaid-svg-k7TdSbOWnoMSze78" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="930.7291259765625" style="max-width: 424.953125px;" viewBox="0 0 424.953125 930.7291259765625"><style>#mermaid-svg-k7TdSbOWnoMSze78{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#000000;}#mermaid-svg-k7TdSbOWnoMSze78 .error-icon{fill:#552222;}#mermaid-svg-k7TdSbOWnoMSze78 .error-text{fill:#552222;stroke:#552222;}#mermaid-svg-k7TdSbOWnoMSze78 .edge-thickness-normal{stroke-width:2px;}#mermaid-svg-k7TdSbOWnoMSze78 .edge-thickness-thick{stroke-width:3.5px;}#mermaid-svg-k7TdSbOWnoMSze78 .edge-pattern-solid{stroke-dasharray:0;}#mermaid-svg-k7TdSbOWnoMSze78 .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-svg-k7TdSbOWnoMSze78 .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-svg-k7TdSbOWnoMSze78 .marker{fill:#666;stroke:#666;}#mermaid-svg-k7TdSbOWnoMSze78 .marker.cross{stroke:#666;}#mermaid-svg-k7TdSbOWnoMSze78 svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#mermaid-svg-k7TdSbOWnoMSze78 .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#000000;}#mermaid-svg-k7TdSbOWnoMSze78 .cluster-label text{fill:#333;}#mermaid-svg-k7TdSbOWnoMSze78 .cluster-label span{color:#333;}#mermaid-svg-k7TdSbOWnoMSze78 .label text,#mermaid-svg-k7TdSbOWnoMSze78 span{fill:#000000;color:#000000;}#mermaid-svg-k7TdSbOWnoMSze78 .node rect,#mermaid-svg-k7TdSbOWnoMSze78 .node circle,#mermaid-svg-k7TdSbOWnoMSze78 .node ellipse,#mermaid-svg-k7TdSbOWnoMSze78 .node polygon,#mermaid-svg-k7TdSbOWnoMSze78 .node path{fill:#eee;stroke:#999;stroke-width:1px;}#mermaid-svg-k7TdSbOWnoMSze78 .node .label{text-align:center;}#mermaid-svg-k7TdSbOWnoMSze78 .node.clickable{cursor:pointer;}#mermaid-svg-k7TdSbOWnoMSze78 .arrowheadPath{fill:#333333;}#mermaid-svg-k7TdSbOWnoMSze78 .edgePath .path{stroke:#666;stroke-width:1.5px;}#mermaid-svg-k7TdSbOWnoMSze78 .flowchart-link{stroke:#666;fill:none;}#mermaid-svg-k7TdSbOWnoMSze78 .edgeLabel{background-color:white;text-align:center;}#mermaid-svg-k7TdSbOWnoMSze78 .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#mermaid-svg-k7TdSbOWnoMSze78 .cluster rect{fill:hsl(210,66.6666666667%,95%);stroke:#26a;stroke-width:1px;}#mermaid-svg-k7TdSbOWnoMSze78 .cluster text{fill:#333;}#mermaid-svg-k7TdSbOWnoMSze78 .cluster span{color:#333;}#mermaid-svg-k7TdSbOWnoMSze78 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(-160,0%,93.3333333333%);border:1px solid #26a;border-radius:2px;pointer-events:none;z-index:100;}#mermaid-svg-k7TdSbOWnoMSze78:root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#mermaid-svg-k7TdSbOWnoMSze78 flowchart-v2{fill:apa;}</style><g transform="translate(0, -0.0000019073486328125)"><marker id="flowchart-pointEnd" class="marker flowchart" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="flowchart-pointStart" class="marker flowchart" viewBox="0 0 10 10" refX="0" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="flowchart-circleEnd" class="marker flowchart" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="flowchart-circleStart" class="marker flowchart" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="flowchart-crossEnd" class="marker cross flowchart" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="flowchart-crossStart" class="marker cross flowchart" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M251.00521612167358,49.70833206176758L251.00521612167358,53.87499872843424C251.00521612167358,58.041665395100914,251.00521612167358,66.37499872843425,251.00521612167358,74.70833206176758C251.00521612167358,83.0416653951009,251.00521612167358,91.37499872843425,251.00521612167358,95.5416653951009L251.00521612167358,99.70833206176758" id="L-A-B" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-A LE-B" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M251.00521612167358,141.41666412353516L251.00521612167358,145.5833307902018C251.00521612167358,149.7499974568685,251.00521612167358,158.0833307902018,251.00521612167358,166.41666412353516C251.00521612167358,174.7499974568685,251.00521612167358,183.0833307902018,251.00521612167358,187.2499974568685L251.00521612167358,191.41666412353516" id="L-B-C" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-B LE-C" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M251.00521612167358,233.12499618530273L251.00521612167358,237.2916628519694C251.00521612167358,241.45832951863608,251.00521612167358,249.7916628519694,251.00521612167358,258.12499618530273C251.00521612167358,266.45832951863605,251.00521612167358,274.7916628519694,251.00521612167358,278.95832951863605L251.00521612167358,283.12499618530273" id="L-C-D" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-C LE-D" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M207.93013373310845,324.8333282470703L199.32372340307867,328.999994913737C190.71731307304887,333.1666615804036,173.5044924129893,341.499994913737,164.8980820829595,349.8333282470703C156.2916717529297,358.1666615804036,156.2916717529297,366.499994913737,156.2916717529297,370.6666615804036L156.2916717529297,374.8333282470703" id="L-D-E" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-D LE-E" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M156.2916717529297,416.5416603088379L156.2916717529297,420.7083269755046C156.2916717529297,424.8749936421712,156.2916717529297,433.2083269755046,156.2916717529297,441.5416603088379C156.2916717529297,449.8749936421712,156.2916717529297,458.2083269755046,156.2916717529297,462.3749936421712L156.2916717529297,466.5416603088379" id="L-E-F" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-E LE-F" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M156.2916717529297,508.24999237060547L156.2916717529297,512.4166590372721C156.2916717529297,516.5833257039388,156.2916717529297,524.9166590372721,156.2916717529297,533.2499923706055C156.2916717529297,541.5833257039388,156.2916717529297,549.9166590372721,156.2916717529297,554.0833257039388L156.2916717529297,558.2499923706055" id="L-F-G" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-F LE-G" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M156.2916717529297,599.958324432373L156.2916717529297,604.1249910990397C156.2916717529297,608.2916577657064,156.2916717529297,616.6249910990397,165.97296817170943,631.2292852494382C175.65426459048913,645.8335793998367,195.0168574280486,666.7088343673005,204.69815384682832,677.1464618510323L214.37945026560806,687.5840893347641" id="L-G-H" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-G LE-H" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M288.63098106021573,687.5840903245894L298.1456109652493,677.1464626758867C307.66024087028296,666.7088350271839,326.68950068035025,645.8335797297785,336.20413058538384,627.7535910759285C345.7187604904175,609.6736024220785,345.7187604904175,594.3888804117838,345.7187604904175,579.1041584014893C345.7187604904175,563.8194363911947,345.7187604904175,548.5347143809,345.7187604904175,533.2499923706055C345.7187604904175,517.9652703603109,345.7187604904175,502.6805483500163,345.7187604904175,487.3958263397217C345.7187604904175,472.11110432942706,345.7187604904175,456.8263823191325,345.7187604904175,441.5416603088379C345.7187604904175,426.2569382985433,345.7187604904175,410.9722162882487,345.7187604904175,395.6874942779541C345.7187604904175,380.4027722676595,345.7187604904175,365.1180502573649,337.1123501603877,353.30902258555096C328.5059398303579,341.499994913737,311.2931191702983,333.1666615804036,302.6867088402685,328.999994913737L294.0802985102387,324.8333282470703" id="L-H-D" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-H LE-D" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M251.5052161216737,804.8124933242797L251.42188278834033,811.1215216318766C251.33854945500698,817.4305499394735,251.1718827883403,830.0486065546671,251.08854945500693,842.749996026357C251.00521612167358,855.4513854980469,251.00521612167358,868.2361078262329,251.00521612167358,874.6284689903259L251.00521612167358,881.020830154419" id="L-H-I" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-H LE-I" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(345.7187604904175, 487.3958263397217)"><g class="label" transform="translate(-6.1354169845581055, -13.354166984558105)"><foreignObject width="12.270833969116211" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel">Sí</span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(251.00521612167358, 842.6666631698608)"><g class="label" transform="translate(-9.40625, -13.354166984558105)"><foreignObject width="18.8125" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel">No</span></div></foreignObject></g></g></g><g class="nodes"><g class="node default default" id="flowchart-A-342" transform="translate(251.00521612167358, 28.85416603088379)"><rect class="basic label-container" style="" rx="0" ry="0" x="-75.28125" y="-20.854166984558105" width="150.5625" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-67.78125, -13.354166984558105)"><foreignObject width="135.5625" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Usuario inicia QGIS</span></div></foreignObject></g></g><g class="node default default" id="flowchart-B-343" transform="translate(251.00521612167358, 120.56249809265137)"><rect class="basic label-container" style="" rx="0" ry="0" x="-134.6979217529297" y="-20.854166984558105" width="269.3958435058594" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-127.19792175292969, -13.354166984558105)"><foreignObject width="254.39584350585938" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Activa el plugin de zonas de cultivo</span></div></foreignObject></g></g><g class="node default default" id="flowchart-C-345" transform="translate(251.00521612167358, 212.27083015441895)"><rect class="basic label-container" style="" rx="0" ry="0" x="-83.30208587646484" y="-20.854166984558105" width="166.6041717529297" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-75.80208587646484, -13.354166984558105)"><foreignObject width="151.6041717529297" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Carga capas de datos</span></div></foreignObject></g></g><g class="node default default" id="flowchart-D-347" transform="translate(251.00521612167358, 303.9791622161865)"><rect class="basic label-container" style="" rx="0" ry="0" x="-165.9479217529297" y="-20.854166984558105" width="331.8958435058594" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-158.4479217529297, -13.354166984558105)"><foreignObject width="316.8958435058594" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Selecciona filtros: zona, cultivo, producción</span></div></foreignObject></g></g><g class="node default default" id="flowchart-E-349" transform="translate(156.2916717529297, 395.6874942779541)"><rect class="basic label-container" style="" rx="0" ry="0" x="-96.76042175292969" y="-20.854166984558105" width="193.52084350585938" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-89.26042175292969, -13.354166984558105)"><foreignObject width="178.52084350585938" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Presiona botón Consultar</span></div></foreignObject></g></g><g class="node default default" id="flowchart-F-351" transform="translate(156.2916717529297, 487.3958263397217)"><rect class="basic label-container" style="" rx="0" ry="0" x="-148.2916717529297" y="-20.854166984558105" width="296.5833435058594" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-140.7916717529297, -13.354166984558105)"><foreignObject width="281.5833435058594" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">El plugin consulta datos y resalta zonas</span></div></foreignObject></g></g><g class="node default default" id="flowchart-G-353" transform="translate(156.2916717529297, 579.1041584014893)"><rect class="basic label-container" style="" rx="0" ry="0" x="-117.04167175292969" y="-20.854166984558105" width="234.08334350585938" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-109.54167175292969, -13.354166984558105)"><foreignObject width="219.08334350585938" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Muestra resultados en el mapa</span></div></foreignObject></g></g><g class="node default default" id="flowchart-H-355" transform="translate(251.00521612167358, 727.1354103088379)"><polygon points="77.17708492279053,0 154.35416984558105,-77.17708492279053 77.17708492279053,-154.35416984558105 0,-77.17708492279053" class="label-container" transform="translate(-77.17708492279053,77.17708492279053)" style=""></polygon><g class="label" style="" transform="translate(-48.82291793823242, -13.354166984558105)"><foreignObject width="97.64583587646484" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Desea limpiar</span></div></foreignObject></g></g><g class="node default default" id="flowchart-I-359" transform="translate(251.00521612167358, 901.8749961853027)"><rect class="basic label-container" style="" rx="0" ry="0" x="-77.97917175292969" y="-20.854166984558105" width="155.95834350585938" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-70.47917175292969, -13.354166984558105)"><foreignObject width="140.95834350585938" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Finaliza interacción</span></div></foreignObject></g></g></g></g></g></svg></pre>
+<h3 id="mapa-conceptual-del-entorno-técnico-qgis--plugin">3.8 Mapa conceptual del entorno técnico (QGIS + Plugin)</h3>
+<pre class=" language-mermaid"><svg id="mermaid-svg-fx3QYxk6lryymLG5" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="424.54168701171875" style="max-width: 850.7239990234375px;" viewBox="0 0 850.7239990234375 424.54168701171875"><style>#mermaid-svg-fx3QYxk6lryymLG5{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#000000;}#mermaid-svg-fx3QYxk6lryymLG5 .error-icon{fill:#552222;}#mermaid-svg-fx3QYxk6lryymLG5 .error-text{fill:#552222;stroke:#552222;}#mermaid-svg-fx3QYxk6lryymLG5 .edge-thickness-normal{stroke-width:2px;}#mermaid-svg-fx3QYxk6lryymLG5 .edge-thickness-thick{stroke-width:3.5px;}#mermaid-svg-fx3QYxk6lryymLG5 .edge-pattern-solid{stroke-dasharray:0;}#mermaid-svg-fx3QYxk6lryymLG5 .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-svg-fx3QYxk6lryymLG5 .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-svg-fx3QYxk6lryymLG5 .marker{fill:#666;stroke:#666;}#mermaid-svg-fx3QYxk6lryymLG5 .marker.cross{stroke:#666;}#mermaid-svg-fx3QYxk6lryymLG5 svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#mermaid-svg-fx3QYxk6lryymLG5 .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#000000;}#mermaid-svg-fx3QYxk6lryymLG5 .cluster-label text{fill:#333;}#mermaid-svg-fx3QYxk6lryymLG5 .cluster-label span{color:#333;}#mermaid-svg-fx3QYxk6lryymLG5 .label text,#mermaid-svg-fx3QYxk6lryymLG5 span{fill:#000000;color:#000000;}#mermaid-svg-fx3QYxk6lryymLG5 .node rect,#mermaid-svg-fx3QYxk6lryymLG5 .node circle,#mermaid-svg-fx3QYxk6lryymLG5 .node ellipse,#mermaid-svg-fx3QYxk6lryymLG5 .node polygon,#mermaid-svg-fx3QYxk6lryymLG5 .node path{fill:#eee;stroke:#999;stroke-width:1px;}#mermaid-svg-fx3QYxk6lryymLG5 .node .label{text-align:center;}#mermaid-svg-fx3QYxk6lryymLG5 .node.clickable{cursor:pointer;}#mermaid-svg-fx3QYxk6lryymLG5 .arrowheadPath{fill:#333333;}#mermaid-svg-fx3QYxk6lryymLG5 .edgePath .path{stroke:#666;stroke-width:1.5px;}#mermaid-svg-fx3QYxk6lryymLG5 .flowchart-link{stroke:#666;fill:none;}#mermaid-svg-fx3QYxk6lryymLG5 .edgeLabel{background-color:white;text-align:center;}#mermaid-svg-fx3QYxk6lryymLG5 .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#mermaid-svg-fx3QYxk6lryymLG5 .cluster rect{fill:hsl(210,66.6666666667%,95%);stroke:#26a;stroke-width:1px;}#mermaid-svg-fx3QYxk6lryymLG5 .cluster text{fill:#333;}#mermaid-svg-fx3QYxk6lryymLG5 .cluster span{color:#333;}#mermaid-svg-fx3QYxk6lryymLG5 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(-160,0%,93.3333333333%);border:1px solid #26a;border-radius:2px;pointer-events:none;z-index:100;}#mermaid-svg-fx3QYxk6lryymLG5:root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#mermaid-svg-fx3QYxk6lryymLG5 flowchart-v2{fill:apa;}</style><g transform="translate(0, -0.0000019073486328125)"><marker id="flowchart-pointEnd" class="marker flowchart" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="flowchart-pointStart" class="marker flowchart" viewBox="0 0 10 10" refX="0" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="flowchart-circleEnd" class="marker flowchart" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="flowchart-circleStart" class="marker flowchart" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="flowchart-crossEnd" class="marker cross flowchart" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="flowchart-crossStart" class="marker cross flowchart" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M101.75672253715223,49.70833206176758L98.66532476037099,53.87499872843424C95.57392698358977,58.041665395100914,89.3911314300273,66.37499872843425,86.29973365324607,74.70833206176758C83.20833587646484,83.0416653951009,83.20833587646484,91.37499872843425,83.20833587646484,95.5416653951009L83.20833587646484,99.70833206176758" id="L-A-B" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-A LE-B" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M141.62500190734863,35.80185696670181L164.39409923553467,42.28626948254611C187.1631965637207,48.77068199839041,232.70139122009277,61.73950703007899,255.4704885482788,72.39058621258995C278.23958587646484,83.0416653951009,278.23958587646484,91.37499872843425,278.23958587646484,95.5416653951009L278.23958587646484,99.70833206176758" id="L-A-C" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-A LE-C" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M278.23958587646484,141.41666412353516L278.23958587646484,145.5833307902018C278.23958587646484,149.7499974568685,278.23958587646484,158.0833307902018,278.23958587646484,166.41666412353516C278.23958587646484,174.7499974568685,278.23958587646484,183.0833307902018,278.23958587646484,187.2499974568685L278.23958587646484,191.41666412353516" id="L-C-D" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-C LE-D" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M230.65210044542542,233.12499618530273L221.1441110584437,237.2916628519694C211.63612167146198,241.45832951863608,192.62014289749857,249.7916628519694,183.11215351051683,258.12499618530273C173.60416412353516,266.45832951863605,173.60416412353516,274.7916628519694,173.60416412353516,278.95832951863605L173.60416412353516,283.12499618530273" id="L-D-E" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-D LE-E" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M315.34313609746175,233.12499618530273L322.75643307092355,237.2916628519694C330.1697300443853,241.45832951863608,344.9963239913089,249.7916628519694,352.4096209647707,258.12499618530273C359.8229179382324,266.45832951863605,359.8229179382324,274.7916628519694,359.8229179382324,278.95832951863605L359.8229179382324,283.12499618530273" id="L-D-F" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-D LE-F" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M348.83333587646484,222.81164218016906L388.25000317891437,228.69720118102467C427.66667048136395,234.5827601818803,506.500005086263,246.35387818359152,545.9166723887125,256.40610385111376C585.3333396911621,266.45832951863605,585.3333396911621,274.7916628519694,585.3333396911621,278.95832951863605L585.3333396911621,283.12499618530273" id="L-D-G" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-D LE-G" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M492.1458396911621,313.72093328221655L434.57205454508465,319.73966577635883C376.99826939900714,325.7583982705011,261.85069910685223,337.7958632587857,204.27691396077475,347.9812624195947C146.70312881469727,358.1666615804036,146.70312881469727,366.499994913737,146.70312881469727,370.6666615804036L146.70312881469727,374.8333282470703" id="L-G-H" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-G LE-H" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M519.3527850745634,324.8333282470703L506.1698566773298,328.999994913737C492.98692828009627,333.1666615804036,466.6210714856292,341.499994913737,453.43814308839563,349.8333282470703C440.2552146911621,358.1666615804036,440.2552146911621,366.499994913737,440.2552146911621,370.6666615804036L440.2552146911621,374.8333282470703" id="L-G-I" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-G LE-I" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M651.3138943077608,324.8333282470703L664.4968227049944,328.999994913737C677.6797511022279,333.1666615804036,704.0456078966951,341.499994913737,717.2285362939286,349.8333282470703C730.4114646911621,358.1666615804036,730.4114646911621,366.499994913737,730.4114646911621,370.6666615804036L730.4114646911621,374.8333282470703" id="L-G-J" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-G LE-J" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default default" id="flowchart-A-378" transform="translate(117.22916793823242, 28.85416603088379)"><rect class="basic label-container" style="" rx="0" ry="0" x="-24.39583396911621" y="-20.854166984558105" width="48.79166793823242" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-16.89583396911621, -13.354166984558105)"><foreignObject width="33.79166793823242" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">QGIS</span></div></foreignObject></g></g><g class="node default default" id="flowchart-B-379" transform="translate(83.20833587646484, 120.56249809265137)"><rect class="basic label-container" style="" rx="0" ry="0" x="-75.20833587646484" y="-20.854166984558105" width="150.4166717529297" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-67.70833587646484, -13.354166984558105)"><foreignObject width="135.4166717529297" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Interfaz de usuario</span></div></foreignObject></g></g><g class="node default default" id="flowchart-C-381" transform="translate(278.23958587646484, 120.56249809265137)"><rect class="basic label-container" style="" rx="0" ry="0" x="-69.82291793823242" y="-20.854166984558105" width="139.64583587646484" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-62.32291793823242, -13.354166984558105)"><foreignObject width="124.64583587646484" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Gestor de plugins</span></div></foreignObject></g></g><g class="node default default" id="flowchart-D-383" transform="translate(278.23958587646484, 212.27083015441895)"><rect class="basic label-container" style="" rx="0" ry="0" x="-70.59375" y="-20.854166984558105" width="141.1875" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-63.09375, -13.354166984558105)"><foreignObject width="126.1875" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Plugin de cultivos</span></div></foreignObject></g></g><g class="node default default" id="flowchart-E-385" transform="translate(173.60416412353516, 303.9791622161865)"><rect class="basic label-container" style="" rx="0" ry="0" x="-53.895835876464844" y="-20.854166984558105" width="107.79167175292969" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-46.395835876464844, -13.354166984558105)"><foreignObject width="92.79167175292969" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Vista - PyQt5</span></div></foreignObject></g></g><g class="node default default" id="flowchart-F-387" transform="translate(359.8229179382324, 303.9791622161865)"><rect class="basic label-container" style="" rx="0" ry="0" x="-82.32292175292969" y="-20.854166984558105" width="164.64584350585938" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-74.82292175292969, -13.354166984558105)"><foreignObject width="149.64584350585938" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Controlador - Python</span></div></foreignObject></g></g><g class="node default default" id="flowchart-G-389" transform="translate(585.3333396911621, 303.9791622161865)"><rect class="basic label-container" style="" rx="0" ry="0" x="-93.1875" y="-20.854166984558105" width="186.375" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-85.6875, -13.354166984558105)"><foreignObject width="171.375" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Modelo - Acceso a datos</span></div></foreignObject></g></g><g class="node default default" id="flowchart-H-391" transform="translate(146.70312881469727, 395.6874942779541)"><rect class="basic label-container" style="" rx="0" ry="0" x="-115.70833587646484" y="-20.854166984558105" width="231.4166717529297" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-108.20833587646484, -13.354166984558105)"><foreignObject width="216.4166717529297" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Capas vectoriales .gpkg y .shp</span></div></foreignObject></g></g><g class="node default default" id="flowchart-I-393" transform="translate(440.2552146911621, 395.6874942779541)"><rect class="basic label-container" style="" rx="0" ry="0" x="-127.84375" y="-20.854166984558105" width="255.6875" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-120.34375, -13.354166984558105)"><foreignObject width="240.6875" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Bases de datos espaciales PostGIS</span></div></foreignObject></g></g><g class="node default default" id="flowchart-J-395" transform="translate(730.4114646911621, 395.6874942779541)"><rect class="basic label-container" style="" rx="0" ry="0" x="-112.3125" y="-20.854166984558105" width="224.625" height="41.70833396911621"></rect><g class="label" style="" transform="translate(-104.8125, -13.354166984558105)"><foreignObject width="209.625" height="26.70833396911621"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">Servicios en línea WMS y WFS</span></div></foreignObject></g></g></g></g></g></svg></pre>
+<hr>
+<h2 id="archivos-clave">4. Archivos Clave</h2>
+<ul>
+<li>
+<p><code>plugin.py</code>: Inicializa y registra el plugin dentro de QGIS</p>
+</li>
+<li>
+<p><code>controllers/crop_controller.py</code>: Lógica principal de interacción</p>
+</li>
+<li>
+<p><code>models/crop_model.py</code>: Acceso y consulta de datos</p>
+</li>
+<li>
+<p><code>views/crop_view.py</code>: Interfaz del usuario</p>
+</li>
+<li>
+<p><code>requirements.txt</code>: Lista de dependencias</p>
+</li>
+<li>
+<p><code>test_plugin.py</code>: Pruebas unitarias</p>
+</li>
+<li>
+<p><code>README.md</code>: Documentación básica</p>
+</li>
+<li>
+<p><code>Occidente.gpkg</code>, <code>Cultivos.gpkg</code>: Capas de ejemplo para la ejecución</p>
+</li>
+</ul>
+<hr>
+<h2 id="requisitos">5. Requisitos</h2>
+<ul>
+<li>
+<p>QGIS 3.22 o superior</p>
+</li>
+<li>
+<p>Python 3.9</p>
+</li>
+<li>
+<p>PyQt5</p>
+</li>
+</ul>
+<hr>
+<h2 id="instalación-del-plugin">6. Instalación del Plugin</h2>
+<ol>
+<li>
+<p>Descargue o clone el repositorio del plugin</p>
+</li>
+<li>
+<p>Copie la carpeta al directorio de plugins de QGIS:</p>
+</li>
+</ol>
+<p><strong>Windows:</strong></p>
+<p><code>C:\Users\&lt;usuario&gt;\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\</code></p>
+<p><strong>Linux:</strong></p>
+<p><code>~/.local/share/QGIS/QGIS3/profiles/default/python/plugins/</code></p>
+<p><strong>macOS:</strong></p>
+<p><code>~/Library/Application Support/QGIS/QGIS3/profiles/default/python/plugins/</code></p>
+<ol start="3">
+<li>
+<p>Inicie QGIS</p>
+</li>
+<li>
+<p>Active el plugin desde “Plugins &gt; Gestionar e instalar plugins”</p>
+</li>
+<li>
+<p>También puede instalarlo como archivo <code>.zip</code> desde el menú antes mencionado</p>
+</li>
+</ol>
+<hr>
+<h2 id="uso-del-plugin">7. Uso del Plugin</h2>
+<ol>
+<li>
+<p>Cargue la capa vectorial de zonas de cultivo (por ejemplo <code>Cultivos.gpkg</code>)</p>
+</li>
+<li>
+<p>Seleccione los filtros: zona, departamento, tipo de cultivo y nivel de producción</p>
+</li>
+<li>
+<p>Presione “Consultar” para visualizar los resultados</p>
+</li>
+<li>
+<p>Las zonas coincidentes se resaltarán en el mapa</p>
+</li>
+<li>
+<p>Utilice el botón “Limpiar” para reiniciar la consulta</p>
+</li>
+</ol>
+<hr>
+<h2 id="pruebas">8. Pruebas</h2>
+<p>El archivo <code>test_plugin.py</code> contiene pruebas unitarias básicas usando el módulo <code>unittest</code>.</p>
+<p>Se prueba la carga de tipos de cultivo y la creación de la interfaz.</p>
+<p>Para ejecutar las pruebas:</p>
+<pre class=" language-bash"><code class="prism  language-bash">python  test_plugin.py
+</code></pre>
+<hr>
+<h2 id="dependencias">9. Dependencias</h2>
+<p>Listadas en <code>requirements.txt</code>:</p>
+<ul>
+<li><code>PyQt5 &gt;= 5.15.0</code></li>
+<li><code>QGIS &gt;= 3.22.0</code></li>
+</ul>
+</div>
+</body>
+
+</html>
