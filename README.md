@@ -1,213 +1,549 @@
-# 🌾 Visualización de Cultivos - QGIS Plugin
+# Manual Técnico - Plugin de visualización Inteligente de Zonas de Cultivo y Producción en la Zona Occidental de El Salvador con QGIS
 
-Un plugin para QGIS que permite visualizar y consultar información sobre cultivos agrícolas.
+## Índice
+1. [Documentación de QGIS: Instalación y uso básico](#1-documentación-de-qgis-instalación-y-uso-básico)
+2. [Descripción General](#2-descripción-general)
+3. [Arquitectura del Sistema](#3-arquitectura-del-sistema)
+4. [Archivos Clave](#4-archivos-clave)
+5. [Requisitos](#5-requisitos)
+6. [Instalación del Plugin](#6-instalación-del-plugin)
+7. [Uso del Plugin](#7-uso-del-plugin)
+8. [Pruebas y Cobertura](#8-pruebas-y-cobertura)
+9. [CI/CD y Automatización](#9-cicd-y-automatización)
+10. [Dependencias](#10-dependencias)
 
-## 🚀 **Sistema de Testing Optimizado - 84% Coverage** ✅
+## 1. Documentación de QGIS: Instalación y uso básico
 
-[![Coverage](https://img.shields.io/badge/coverage-84%25-brightgreen)](htmlcov/index.html)
-[![Tests](https://img.shields.io/badge/tests-77%20passing-brightgreen)](tests/)
-[![Python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11-blue)](https://www.python.org/)
-[![CI/CD](https://img.shields.io/badge/CI%2FCD-production%20ready-green)](.github/workflows/ci-production.yml)
-[![Quality](https://img.shields.io/badge/quality-automated-blue)](.pre-commit-config.yaml)
+### ¿Qué es QGIS?
+QGIS (Quantum Geographic Information System) es un sistema de información geográfica (SIG) gratuito y de código abierto que permite la visualización, edición, análisis y publicación de información geoespacial. Es compatible con múltiples formatos de datos (raster y vectoriales) y se puede extender mediante complementos (plugins), lo que lo hace una alternativa potente y flexible frente a soluciones propietarias.
 
-### ⚡ **Quick Start para Desarrolladores**
+Está disponible para sistemas operativos Windows, Linux y macOS, y es ampliamente usado en los sectores académico, gubernamental y privado.
+
+### ¿Dónde obtener QGIS?
+QGIS puede descargarse desde su sitio oficial:
+
+🔗 https://qgis.org/es/site/forusers/download.html
+
+Allí encontrarás versiones para los principales sistemas operativos. Se recomienda descargar la versión LTR (Long Term Release), ya que garantiza mayor estabilidad para entornos de producción
+
+### Requisitos mínimos recomendados
+- **Sistema operativo**: Windows 10+, macOS 11+, o una distribución Linux actualizada.
+- **Procesador**: Intel Core i5 o superior.
+- **Memoria RAM**: mínimo 4 GB (recomendado 8 GB o más para manejo de capas grandes).
+- **Almacenamiento**: 2 GB de espacio libre para la instalación.
+- **Resolución de pantalla**: 1280x768 o superior.
+
+### Instalación
+
+#### En Windows
+1. Ve a la página de descarga y selecciona el instalador correspondiente (standalone installer).
+2. Ejecuta el instalador y sigue las instrucciones. Elige instalar la versión LTR si es tu primera vez.
+3. Se instalarán QGIS, GRASS GIS y otros componentes útiles por defecto.
+
+#### En Linux (Ubuntu/Debian)
 ```bash
-# Setup rápido
-make setup          # Instala dependencias y hooks
-make test           # Tests completos (60s, 84% coverage)
-make test-core      # Tests rápidos (30s)
-make format         # Formatea código automáticamente
+sudo apt update
+sudo apt install qgis qgis-plugin-grass
 ```
 
-### 📋 **CI/CD Pipeline Completo**
-- ✅ **Production Ready**: Pipeline robusto con 60% coverage mínimo
-- ✅ **Quality Gates**: Linting, formatting, y security checks
-- ✅ **Multi-Environment**: Unit tests + functional tests
-- ✅ **Comprehensive Reporting**: Coverage badges y artifacts
+También puedes añadir el repositorio oficial de QGIS para versiones más recientes.
 
-## 📊 **Resumen de Testing**
+#### En macOS
+1. Descarga el archivo .dmg desde la web oficial.
+2. Instala primero los paquetes de dependencias (como GDAL y Python si se requiere).
+3. Arrastra QGIS a tu carpeta de Aplicaciones.
 
-| Módulo | Coverage | Tests | Estado |
-|--------|----------|-------|--------|
-| **config.py** | 98% | 37 tests | ✅ Excelente |
-| **models/crop_model.py** | 100% | 12 tests | ✅ Perfecto |
-| **plugin.py** | 100% | 8 tests | ✅ Perfecto |
-| **controllers/crop_controller.py** | 82% | 16 tests | ✅ Muy bueno |
-| **views/crop_view.py** | Parcial | 3 tests | ⚠️ Complejo UI |
-| **TOTAL** | **84%** | **76 tests** | **✅ OBJETIVO SUPERADO** |
+### Primeros pasos con QGIS
+Al iniciar QGIS verás una interfaz dividida en varias áreas clave:
 
-### 🎯 **Objetivos Alcanzados**
-- ✅ **Target**: 60% coverage mínimo
-- ✅ **Achieved**: 84% coverage (superado por 24%)
-- ✅ **CI/CD**: Pipeline completo automatizado
-- ✅ **Quality**: Pre-commit hooks + linting
-- ✅ **Performance**: Tests optimizados (30-60s)
+- **Barra de herramientas**: permite acceder a funciones comunes (agregar capas, hacer zoom, medir distancias, etc.).
+- **Panel de capas**: muestra la lista de capas cargadas y su orden de visualización.
+- **Lienzo del mapa**: área principal donde se renderizan las capas.
+- **Panel de navegador**: facilita el acceso rápido a archivos y bases de datos geográficas.
+- **Consola de Python**: permite ejecutar comandos directamente usando PyQGIS.
 
-## 🔧 **Herramientas de Desarrollo**
+### Tipos de datos que puedes usar
+QGIS trabaja con dos tipos principales de datos:
 
-### 📝 **Comandos Make (Recomendados)**
+**Vectoriales**: puntos, líneas o polígonos. Formatos comunes:
+- .shp (Shapefile)
+- .geojson
+- .gpkg (GeoPackage)
+- .kml, .csv con coordenadas
+
+**Raster**: imágenes compuestas por píxeles. Ejemplos:
+- Imágenes satelitales
+- Modelos digitales de elevación
+- .tif, .jpg, .png georreferenciados
+
+También se puede conectar a bases de datos espaciales como PostGIS, Spatialite, y servicios en línea como WMS, WMTS y WFS.
+
+### Uso de complementos (plugins)
+QGIS tiene una gran comunidad que ha desarrollado numerosos plugins. Para acceder a ellos:
+
+1. Ir a **Complementos > Administrar e instalar complementos**.
+2. Buscar por nombre (ej. "QuickMapServices", "OpenLayers Plugin", "qgis2web").
+3. Instalar y activar el plugin.
+
+**Nota**: El plugin descrito en este manual es uno de estos complementos personalizados que puedes cargar manualmente.
+
+### Recursos de ayuda y formación
+- **Manuales oficiales**: https://docs.qgis.org
+- **Foros y comunidad**:
+  - StackExchange: https://gis.stackexchange.com
+  - Reddit: https://reddit.com/r/QGIS
+
+## 2. Descripción General
+
+Este plugin para QGIS está diseñado para integrarse dentro de la interfaz del programa. Permite visualizar y analizar zonas de cultivo en el occidente de El Salvador. Facilita la consulta y el filtrado de zonas según tipo de cultivo y nivel de producción, resaltando automáticamente las áreas que cumplen los criterios seleccionados.
+
+## 3. Arquitectura del Sistema
+
+El plugin sigue el patrón Modelo-Vista-Controlador (MVC), integrándose directamente con la estructura de QGIS y PyQt5.
+
+### 3.1 Modelo (models/)
+- **crop_model.py**: Gestiona la lógica de acceso y consulta de datos de cultivos. Proporciona métodos para obtener los cultivos disponibles y otros datos requeridos por la vista y el controlador.
+
+### 3.2 Vista (views/)
+- **crop_view.py**: Define la interfaz gráfica del usuario (GUI) usando PyQt5 y se muestra como un panel dentro de QGIS. Incluye:
+  - ComboBox para zona y tipo de cultivo
+  - Radio buttons para seleccionar un solo departamento
+  - ComboBox para nivel de producción (Alto, Medio, Bajo)
+  - Botones de consulta y limpieza
+  - Etiquetas para mostrar resultados y mensajes de estado
+
+### 3.3 Controlador (controllers/)
+- **crop_controller.py**: Orquesta la interacción entre la vista y el modelo. Gestiona los eventos de la interfaz, ejecuta las consultas sobre los datos y actualiza la vista con los resultados.
+
+### 3.4 Flujo de Datos
+1. El usuario selecciona zona, departamento, tipo de cultivo y nivel de producción en la interfaz del plugin
+2. Al presionar "Consultar", el controlador toma los parámetros y realiza la consulta al modelo
+3. Las zonas de cultivo que cumplen los criterios se resaltan en el mapa
+4. Se muestran los resultados en la interfaz
+5. El botón "Limpiar" restablece la búsqueda y visualización
+
+### 3.5 Diagrama de flujo del uso del plugin
+```mermaid
+flowchart TD
+    A(["Inicio"]) --> B["Cargar capa de zonas de cultivo"]
+    B --> C["Seleccionar filtros"]
+    C --> D["Consultar"]
+    D --> E{"¿Limpiar?"}
+    E -- Sí --> C
+    E -- No --> F["Resaltar zonas coincidentes"]
+    F --> G(["Fin"])
+```
+
+### 3.6 Diagrama de Arquitectura del Sistema (MVC)
+```mermaid
+flowchart TD
+    A[Usuario] --> B[Vista crop_view.py]
+    B --> C[Controlador crop_controller.py]
+    C --> D[Modelo crop_model.py]
+    D --> E[Base de Datos o Capas .gpkg, .shp, etc.]
+    C --> B
+    B --> A
+```
+
+### 3.7 Diagrama de interacción del usuario con el plugin
+```mermaid
+flowchart TD
+    A[Usuario inicia QGIS] --> B[Activa el plugin de zonas de cultivo]
+    B --> C[Carga capas de datos]
+    C --> D[Selecciona filtros: zona, cultivo, producción]
+    D --> E[Presiona botón Consultar]
+    E --> F[El plugin consulta datos y resalta zonas]
+    F --> G[Muestra resultados en el mapa]
+    G --> H{Desea limpiar}
+    H -- Sí --> D
+    H -- No --> I[Finaliza interacción]
+```
+
+### 3.8 Mapa conceptual del entorno técnico (QGIS + Plugin)
+```mermaid
+flowchart TD
+    A[QGIS] --> B[Interfaz de usuario]
+    A --> C[Gestor de plugins]
+    C --> D[Plugin de cultivos]
+    
+    D --> E[Vista - PyQt5]
+    D --> F[Controlador - Python]
+    D --> G[Modelo - Acceso a datos]
+    
+    G --> H[Capas vectoriales .gpkg y .shp]
+    G --> I[Bases de datos espaciales PostGIS]
+    G --> J[Servicios en línea WMS y WFS]
+```
+
+## 4. Archivos Clave
+
+- **plugin.py**: Inicializa y registra el plugin dentro de QGIS
+- **controllers/crop_controller.py**: Lógica principal de interacción
+- **models/crop_model.py**: Acceso y consulta de datos
+- **views/crop_view.py**: Interfaz del usuario
+- **config.py**: Configuración del plugin y variables de entorno
+- **requirements.txt**: Lista de dependencias de producción
+- **requirements-dev.txt**: Dependencias de desarrollo y testing
+- **tests/**: Directorio con todas las pruebas unitarias, funcionales e integración
+- **README.md**: Documentación técnica completa
+- **Occidente.gpkg, Cultivos.gpkg**: Capas de ejemplo para la ejecución
+
+## 5. Requisitos
+
+- **QGIS 3.22 o superior**
+- **Python 3.9+**
+- **PyQt5**
+
+## 6. Instalación del Plugin
+
+1. Descargue o clone el repositorio del plugin
+2. Copie la carpeta al directorio de plugins de QGIS:
+
+   **Windows:**
+   ```
+   C:\Users\<usuario>\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\
+   ```
+
+   **Linux:**
+   ```
+   ~/.local/share/QGIS/QGIS3/profiles/default/python/plugins/
+   ```
+
+   **macOS:**
+   ```
+   ~/Library/Application Support/QGIS/QGIS3/profiles/default/python/plugins/
+   ```
+
+3. Inicie QGIS
+4. Active el plugin desde "Plugins > Gestionar e instalar plugins"
+5. También puede instalarlo como archivo .zip desde el menú antes mencionado
+
+## 7. Uso del Plugin
+
+1. Cargue la capa vectorial de zonas de cultivo (por ejemplo `Cultivos.gpkg`)
+2. Seleccione los filtros: zona, departamento, tipo de cultivo y nivel de producción
+3. Presione "Consultar" para visualizar los resultados
+4. Las zonas coincidentes se resaltarán en el mapa
+5. Utilice el botón "Limpiar" para reiniciar la consulta
+
+## 8. Pruebas y Cobertura
+
+### 📊 Estado Actual de las Pruebas
+- **Cobertura General**: 81% ✅
+- **Archivos Probados**: 10/11
+- **Líneas Cubiertas**: 300/359
+- **Cobertura de Ramas**: 72%
+
+### 🏗️ Estructura de Pruebas
+```
+tests/
+├── unit/                    # Pruebas unitarias
+│   ├── test_config.py      # Configuración y variables de entorno
+│   ├── test_crop_model.py  # Modelo de datos de cultivos
+│   └── test_plugin.py      # Plugin principal
+├── functional/             # Pruebas funcionales
+│   └── test_ui.py         # Interfaz de usuario
+├── integration/           # Pruebas de integración
+│   └── test_pipeline.py   # Pipeline completo
+└── fixtures/              # Datos de prueba
+    ├── test_cultivos.gpkg
+    └── test_occidente.gpkg
+```
+
+### 🧪 Comandos de Prueba
+
+#### Pruebas Rápidas (Core)
 ```bash
-# Testing
-make test          # Tests completos con coverage (recomendado)
-make test-fast     # Tests sin coverage (45s)
-make test-core     # Solo funcionalidad principal (30s)
-
-# Calidad de Código
-make format        # Auto-formateo (Black + isort)
-make lint          # Verificaciones de calidad
-make pre-commit    # Hooks de pre-commit
-
-# Desarrollo
-make clean         # Limpiar artifacts
-make ci-test       # Simular CI/CD localmente
-make info          # Información del proyecto
+python run_tests.py --type core --fast
 ```
 
-### 🐍 **Scripts Directos**
+#### Todas las Pruebas Unitarias
 ```bash
-# Tests específicos
-python run_tests.py --type core --fast     # Rápido core
-python run_tests.py --type unit            # Todos los unit tests
-python run_tests.py --clean                # Limpiar
-
-# Pytest directo
-pytest tests/unit/test_crop_model.py -v    # Test específico
-pytest --cov --cov-report=html             # Coverage HTML
+python run_tests.py --type unit
 ```
 
-## 🔄 **CI/CD Pipeline Completo**
-
-### 🌟 **Pipeline de Producción**
-- **GitHub Actions**: Pipeline completo con QGIS + tests
-- **Quality Gates**: Code formatting, linting, security scanning
-- **Coverage Enforcement**: Mínimo 60% coverage requerido
-- **Multi-Stage**: Unit tests → Functional tests → Coverage analysis
-- **Artifact Management**: Reports y badges automáticos
-
-### 🚦 **Workflows Activos**
-1. **`ci-production.yml`**: Pipeline principal (main/develop)
-2. **`ci-robust.yml`**: Pipeline robusto para todas las ramas
-3. **Quality Checks**: Automáticos en cada PR
-4. **Coverage Reporting**: Artefactos y badges automáticos
-
-### 📋 **Características del Pipeline**
-- ✅ **Automated Testing**: 60% coverage mínimo garantizado
-- ✅ **Quality Assurance**: Black, isort, Flake8, Bandit
-- ✅ **Security Scanning**: Dependency y code security
-- ✅ **Multi-Python**: Matrix testing (3.9, 3.10, 3.11)
-- ✅ **QGIS Integration**: Full plugin testing con QGIS
-- ✅ **Deployment Ready**: Status checks para deployment
-
-### 🎯 **Configuración Avanzada**
-- **Coverage Config**: `.coveragerc` con exclusiones optimizadas
-- **Test Markers**: Unit, functional, integration, slow tests
-- **Environment Mocking**: CI/CD mocks para máxima compatibilidad
-- **Parallel Execution**: Tests optimizados para velocidad
-
-## 🛠️ **Instalación y Setup**
-
-### 📋 **Requisitos**
-- Python 3.9+
-- QGIS 3.x
-- PyQt5
-
-### 🏁 **Setup Inicial**
+#### Todas las Pruebas con Cobertura
 ```bash
-# 1. Clonar repositorio
-git clone <repository-url>
-cd visualizacion_de_cultivos
-
-# 2. Activar entorno virtual
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Linux/Mac
-
-# 3. Setup automático
-make setup
-
-# 4. Verificar instalación
-make test-core
+python run_tests.py --type all
 ```
 
-## 📁 **Estructura del Proyecto**
-```
-visualizacion_de_cultivos/
-├── 📁 controllers/          # Lógica de control
-├── 📁 models/              # Modelos de datos  
-├── 📁 views/               # Interfaces de usuario
-├── 📁 tests/               # Tests organizados
-│   ├── unit/              # Tests unitarios (77 tests)
-│   └── functional/        # Tests funcionales (futuro)
-├── 📁 .github/workflows/   # CI/CD pipelines
-├── 🔧 .coveragerc          # Configuración coverage
-├── 🔧 .pre-commit-config.yaml
-├── 🔧 pytest.ini          # Configuración tests
-├── 🔧 Makefile            # Comandos desarrollo
-├── 📖 DEVELOPMENT.md      # Guía detallada
-└── 📄 requirements.txt    # Dependencias
+#### Pruebas Específicas
+```bash
+# Probar solo configuración
+python -m pytest tests/unit/test_config.py -v
+
+# Probar solo modelo de cultivos
+python -m pytest tests/unit/test_crop_model.py -v
+
+# Probar solo plugin principal
+python -m pytest tests/unit/test_plugin.py -v
 ```
 
-## 📈 **Métricas de Calidad**
+### 📈 Comandos de Cobertura
 
-### 🎯 **Coverage Detallado**
-- **config.py**: 98% (106/108 statements)
-- **crop_model.py**: 100% (37/37 statements)  
-- **plugin.py**: 100% (22/22 statements)
-- **crop_controller.py**: 82% (134/163 statements)
-- **Total**: 84% (300/359 statements medidos)
+#### Generar Reporte HTML
+```bash
+python -m pytest --cov --cov-report=html
+```
 
-### ⚡ **Performance**
-- **Core tests**: ~30 segundos
-- **All unit tests**: ~60 segundos
-- **Full CI/CD pipeline**: ~5 minutos
-- **Pre-commit hooks**: ~10 segundos
+#### Reporte en Terminal
+```bash
+python -m pytest --cov --cov-report=term-missing
+```
 
-## 🤝 **Desarrollo y Contribuciones**
+#### Reporte XML (para CI/CD)
+```bash
+python -m pytest --cov --cov-report=xml
+```
 
-### 📋 **Workflow Recomendado**
-1. **Feature branch**: `git checkout -b feat/nueva-funcionalidad`
-2. **Desarrollo activo**: `make test-core` (feedback rápido)
-3. **Antes de commit**: `make test` (coverage completo)
-4. **Auto-formato**: `make format`
-5. **Create PR**: CI/CD automático
+#### Ver Reporte de Cobertura
+```bash
+# Windows
+start htmlcov/index.html
 
-### ✅ **Checklist para Contributors**
-- [ ] `make test` pasa (84% coverage mantenido)
-- [ ] `make format` aplicado
-- [ ] Tests para nuevas funcionalidades
-- [ ] Pre-commit hooks pasando
-- [ ] Documentación actualizada si necesario
+# macOS
+open htmlcov/index.html
 
-## 📚 **Documentación**
+# Linux
+xdg-open htmlcov/index.html
+```
 
-- 📖 **[DEVELOPMENT.md](DEVELOPMENT.md)**: Guía completa para desarrolladores
-- 🚀 **[CI_CD_SETUP.md](CI_CD_SETUP.md)**: Setup completo CI/CD pipeline
-- 📊 **[htmlcov/index.html](htmlcov/index.html)**: Reporte detallado de coverage
-- 🔧 **[.github/workflows/](/.github/workflows/)**: Configuración CI/CD
+### 🔍 Análisis de Cobertura por Archivo
 
-## 🎉 **Logros del Proyecto**
+| Archivo | Cobertura | Estado | Observaciones |
+|---------|-----------|--------|---------------|
+| `config.py` | 98% | ✅ Excelente | Configuración bien probada |
+| `models/crop_model.py` | 98% | ✅ Excelente | Modelo de datos robusto |
+| `plugin.py` | 100% | ✅ Perfecto | Plugin principal completo |
+| `controllers/crop_controller.py` | 78% | ⚠️ Bueno | Necesita más pruebas de UI |
+| `views/crop_view.py` | 85% | ✅ Bueno | Vista bien cubierta |
+| `__init__.py` | 33% | ❌ Mejorar | Archivo de inicialización |
+| `resources_rc.py` | 0% | ❌ No probado | Recursos compilados |
+| `compile_resources.py` | 0% | ❌ No probado | Script de compilación |
 
-### 📊 **Mejoras Implementadas**
-- **Coverage**: De ~4% a **84%** (mejora del 2000%)
-- **Tests**: **76 tests** pasando (100% success rate)
-- **CI/CD**: Pipeline completamente automatizado
-- **Quality**: Pre-commit hooks + linting automático
-- **Performance**: Tests optimizados con feedback rápido
+### 🎯 Pruebas Avanzadas
 
-### 🏆 **Excelencia en Testing**
-Este proyecto demuestra **prácticas ejemplares** en:
-- ✅ Test coverage superior al 80%
-- ✅ CI/CD automatizado y optimizado
-- ✅ Herramientas de desarrollo simplificadas
-- ✅ Documentación completa
-- ✅ Quality gates automáticos
+#### Pruebas con Timeout
+```bash
+python -m pytest --timeout=300
+```
+
+#### Pruebas con Salida Detallada
+```bash
+python -m pytest -v --tb=short
+```
+
+#### Pruebas por Categoría
+```bash
+# Solo pruebas unitarias
+python -m pytest -m unit
+
+# Solo pruebas funcionales
+python -m pytest -m functional
+
+# Solo pruebas de integración
+python -m pytest -m integration
+```
+
+#### Verificar Umbrales de Cobertura
+```bash
+# Mínimo 60% cobertura general
+python -m pytest --cov --cov-fail-under=60
+
+# Mínimo 40% cobertura unitaria
+python -m pytest --cov --cov-fail-under=40 tests/unit/
+```
+
+### 🔧 Solución de Problemas
+
+#### Limpiar Cache y Reiniciar
+```bash
+# Limpiar cache de pytest
+python -m pytest --cache-clear
+
+# Limpiar datos de cobertura
+coverage erase
+```
+
+#### Depurar Fallos de Pruebas
+```bash
+# Ejecutar con depuración
+python -m pytest -s -vv --tb=long
+
+# Ejecutar prueba específica con depuración
+python -m pytest tests/unit/test_config.py::TestConfig::test_config_default_values -s -vv
+```
+
+### 📁 Ubicación de Archivos de Prueba
+
+- **Reporte HTML de Cobertura**: `htmlcov/index.html`
+- **Reporte XML de Cobertura**: `coverage.xml`
+- **Configuración de Cobertura**: `.coveragerc`
+- **Configuración de Pytest**: `pytest.ini`
+- **Archivos de Prueba**: `tests/unit/`, `tests/functional/`, `tests/integration/`
+
+## 9. CI/CD y Automatización
+
+### 🚀 Pipeline de Integración Continua
+
+El proyecto incluye un pipeline de CI/CD automatizado que se ejecuta en GitHub Actions:
+
+#### Características del Pipeline:
+- **Activación**: Push a `main` o `develop`, Pull Requests, o manualmente
+- **Entorno**: Ubuntu con Python 3.11
+- **Cobertura Mínima**: 60%
+- **Reportes**: HTML, XML y artefactos descargables
+
+#### Etapas del Pipeline:
+1. **Configuración del Entorno**
+   - Instalación de Python y dependencias
+   - Configuración de QGIS mocks para CI
+
+2. **Verificación de Calidad**
+   - Linting con flake8
+   - Verificación de formato de código
+   - Análisis de seguridad
+
+3. **Pruebas Principales**
+   - Pruebas unitarias (config, modelo, plugin)
+   - Generación de reportes de cobertura
+   - Verificación de umbrales mínimos
+
+4. **Pruebas de Integración**
+   - Pruebas del pipeline completo
+   - Validación de entorno CI/CD
+   - Verificación de configuraciones
+
+5. **Reportes y Artefactos**
+   - Generación de reportes HTML/XML
+   - Subida de artefactos
+   - Notificaciones de estado
+
+#### Simulación Local del Entorno CI
+```bash
+# Configurar variables de entorno CI
+set ENVIRONMENT=test
+set CI=true
+python -m pytest --cov
+```
+
+#### Monitoreo del Pipeline
+- **GitHub Actions**: Pestaña "Actions" en el repositorio
+- **Estado de Builds**: Badges en el README
+- **Reportes de Cobertura**: Artefactos descargables
+
+### 🔄 Automatización de Desarrollo
+
+#### Pre-commit Hooks
+```bash
+# Instalar pre-commit hooks
+pip install pre-commit
+pre-commit install
+
+# Ejecutar manualmente
+pre-commit run --all-files
+```
+
+#### Scripts de Automatización
+- **`run_tests.py`**: Runner de pruebas optimizado
+- **`verify_tests.py`**: Verificación de integridad
+- **`setup_ci_cd.py`**: Configuración automática de CI/CD
+
+## 10. Dependencias
+
+### Dependencias de Producción (`requirements.txt`)
+```txt
+PyQt5>=5.15.0
+qgis>=3.22.0
+```
+
+### Dependencias de Desarrollo (`requirements-dev.txt`)
+```txt
+# Testing frameworks
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-mock>=3.10.0
+pytest-qt>=4.2.0
+pytest-timeout>=2.1.0
+
+# Coverage tools
+coverage>=7.0.0
+
+# Mocking and testing utilities
+mock>=5.0.0
+
+# Environment management
+python-dotenv>=1.0.0
+
+# Code quality tools
+flake8>=6.0.0
+black>=23.0.0
+isort>=5.12.0
+
+# Documentation
+sphinx>=5.0.0
+sphinx-rtd-theme>=1.2.0
+
+# Development utilities
+pre-commit>=3.0.0
+tox>=4.0.0
+
+# GUI testing
+pytest-qt>=4.2.0
+```
+
+### Instalación de Dependencias
+
+#### Producción
+```bash
+pip install -r requirements.txt
+```
+
+#### Desarrollo
+```bash
+pip install -r requirements-dev.txt
+```
+
+#### Configuración Completa de Desarrollo
+```bash
+# Instalar dependencias de desarrollo
+pip install -r requirements-dev.txt
+
+# Configurar pre-commit hooks
+pre-commit install
+
+# Ejecutar configuración de CI/CD
+python setup_ci_cd.py
+
+# Verificar instalación
+python verify_tests.py
+```
 
 ---
 
-## 📞 **Soporte**
+## 📞 Soporte y Contribución
 
-- **Quick Start**: `make info`
-- **Tests Issues**: Revisar `htmlcov/index.html`
-- **CI/CD Issues**: GitHub Actions logs
-- **Development**: Ver `DEVELOPMENT.md`
+### Reportar Problemas
+- **Issues**: Usar GitHub Issues para reportar bugs
+- **Documentación**: Mejorar la documentación via Pull Requests
+- **Pruebas**: Añadir nuevas pruebas para casos no cubiertos
 
-**¡Happy coding! 🚀** 
+### Desarrollo
+1. Fork del repositorio
+2. Crear rama de feature: `git checkout -b feature/nueva-funcionalidad`
+3. Ejecutar pruebas: `python run_tests.py --type all`
+4. Commit cambios: `git commit -m "feat: nueva funcionalidad"`
+5. Push: `git push origin feature/nueva-funcionalidad`
+6. Crear Pull Request
+
+### Estándares de Código
+- **Cobertura mínima**: 60%
+- **Estilo**: PEP 8
+- **Documentación**: Docstrings para todas las funciones públicas
+- **Pruebas**: Pruebas unitarias para nueva funcionalidad
+
+---
+
+**Versión**: 2.0.0  
+**Última actualización**: Enero 2025  
+**Licencia**: [Especificar licencia] 
